@@ -126,6 +126,11 @@ struct ReadingValue: View {
                 .tracking(-0.3)
                 .monospacedDigit()
                 .foregroundStyle(T.C.ink)
+                // F31：数字变化时**滚动**而不是跳变。
+                // 系统自带的数字过渡在「减少动态效果」开启时会自动退化成直接替换 ——
+                // 不需要我们自己判一次。
+                .contentTransition(.numericText(value: Double(value) ?? 0))
+                .animation(T.M.snap, value: value)
             if let unit {
                 Text(unit)
                     .type(T.F.caption)
@@ -338,6 +343,10 @@ struct SegmentedBar: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // 语音语义：这几格是**标签页**（不是几个按钮）——
+                // 读屏用户听到的是「今日，标签，已选中」，而不是三个孤零零的按钮。
+                .accessibilityRole(.tab)
+                .accessibilityAddTraits(index == selected ? [.isSelected] : [])
             }
         }
         .padding(4)
@@ -356,9 +365,14 @@ struct EmptyNote: View {
     var detail: String
     var action: String? = nil
     var run: (() -> Void)? = nil
+    /// F34：这一块的母题（光从窗口进来）。不同域给不同变体，
+    /// 让空屏也认得出「这是哪一块」，而不是一片空白。
+    var motif: EmptyMotif = .door
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            EmptyMotifView(motif: motif, size: 44)
+                .padding(.bottom, 2)
             DisplayLine(text: line, size: 30)
             Text(detail)
                 .type(T.F.footnote)

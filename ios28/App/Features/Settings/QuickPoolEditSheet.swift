@@ -16,6 +16,18 @@ struct QuickPoolEditSheet: View {
 
     private var gridCount: Int { SettingsStore.shared.quickGridCount }
 
+    /// iOS 27：保存按钮在工具栏里；更早系统：留在页内。
+    private var canPinSave: Bool {
+        if #available(iOS 27.0, *) { return true }
+        return false
+    }
+
+    private func save() {
+        QuickPool.setSelected(picked)
+        QuickPool.setSmartFirst(smart)
+        dismiss()
+    }
+
     private var judgement: String {
         if picked.isEmpty { return "一个格子都没选。" }
         if picked.count > gridCount { return "选了 \(picked.count) 个，托盘只显示前 \(gridCount) 个。" }
@@ -70,12 +82,13 @@ struct QuickPoolEditSheet: View {
                                detail: "关闭时按上面的顺序排；开启后点得多的动作自动排前面。",
                                isOn: $smart)
 
-                    PrimaryButton(title: "保存", enabled: !picked.isEmpty) {
-                        QuickPool.setSelected(picked)
-                        QuickPool.setSmartFirst(smart)
-                        dismiss()
+                    // iOS 27：保存已进工具栏（钉在后缘），页内不再重复一个按钮。
+                    if !canPinSave {
+                        PrimaryButton(title: "保存", enabled: !picked.isEmpty) {
+                            save()
+                        }
+                        .padding(.top, 22)
                     }
-                    .padding(.top, 22)
                     Text(picked.isEmpty
                          ? "至少勾一个动作，否则托盘那块会空着。"
                          : "只改本机版面，不动门锁、凭证与记录。")
@@ -90,6 +103,32 @@ struct QuickPoolEditSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }
+                }
+                // iOS 27：主行动**钉**在后缘 —— 空间再紧它也留在原处。
+                if #available(iOS 27.0, *) {
+                    ToolbarItem(placement: .thresholdPinnedTrailing) {
+                        Button("保存") { save() }
+                    }
+                    .visibilityPriority(.high)
+                } else {
+                    // iOS 26：次要动作放在工具栏末尾的下拉菜单里（内容与 iOS 27 相同）。
+                    ToolbarContent.overflowMenuFallback {
+                        Button("恢复默认顺序") {
+                            picked = QuickPool.all.map(\.id)
+                        }
+                        Button("清空选择", role: .destructive) {
+                            picked = []
+                        }
+                    }
+                }
+            }
+            // iOS 27：次要动作进**系统的溢出菜单**（永远待在溢出里，不与主行动抢位置）。
+            .toolbarOverflowCompat {
+                Button("恢复默认顺序") {
+                    picked = QuickPool.all.map(\.id)
+                }
+                Button("清空选择", role: .destructive) {
+                    picked = []
                 }
             }
         }

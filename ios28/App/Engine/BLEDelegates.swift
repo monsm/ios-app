@@ -82,6 +82,8 @@ extension BLEService: CBPeripheralDelegate {
             return
         }
         // NUS 优先, 网关 FE90 回退 (与 JS discover 同序)
+        // 传输类型由 `TransportKind` 反查 —— 换一条传输只改那一处枚举,
+        // 这里不再自己比对 UUID 字符串 (B16)。
         let target = services.first { $0.uuid == BLEUUID.svcMain }?.uuid
             ?? services.first { $0.uuid == BLEUUID.svcGW }?.uuid
         guard let svc = target else {
@@ -98,9 +100,11 @@ extension BLEService: CBPeripheralDelegate {
             cb?(.failure(BLEErrorX.msg("读取特征失败")))
             return
         }
-        let isMain = service.uuid == BLEUUID.svcMain
-        let wTarget = isMain ? BLEUUID.chrWrite : BLEUUID.chrGWWrite
-        let nTarget = isMain ? BLEUUID.chrNotify : BLEUUID.chrGWNotify
+        // 写/通知特征由传输类型决定 (B16): 不再是「是主服务就用这个, 否则用那个」的二元判断 ——
+        // DFU 的两条通道将来接进来时, 这里不需要再改。
+        let transport = TransportKind.of(serviceUUID: service.uuidString) ?? .lockNUS
+        let wTarget = transport.writeUUID
+        let nTarget = transport.notifyUUID
         let w = chars.first { $0.uuid == wTarget }
         let n = chars.first { $0.uuid == nTarget }
         guard let wc = w else {

@@ -159,7 +159,15 @@ enum AutoOpenKit {
     }
 
     static let fallbackBase = -40
-    static func rssiBase(mac: String) -> Int { AutoOpen.autocal(mac)?.rssiP95 ?? fallbackBase }
+    /// 触发基线（dBm）。
+    ///
+    /// B21：标定 2.0 的档案里有**双向**采样（近 + 远）时，用它算出来的阈值；
+    /// 否则回落旧口径（单次标定的 P95）。两边都有采样时阈值更准 ——
+    /// 它知道「远」到底是多远，而不是靠 P95 猜。
+    static func rssiBase(mac: String) -> Int {
+        if let t = AutoOpenCalibration.threshold(mac: mac) { return t }
+        return AutoOpen.autocal(mac)?.rssiP95 ?? fallbackBase
+    }
     static func armThreshold(base: Int) -> Int { base }
     static func disarmThreshold(base: Int) -> Int { Int((Double(base) + 10 * log10(0.5)).rounded()) }
 

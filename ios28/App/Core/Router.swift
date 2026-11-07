@@ -39,6 +39,7 @@ enum Dest: String, Hashable, CaseIterable, Identifiable {
     case dfu
     case diagnostics
     case security
+    case recovery
     case backup
     case appearance
     case about
@@ -64,6 +65,7 @@ enum Dest: String, Hashable, CaseIterable, Identifiable {
         case .dfu: return "固件升级"
         case .diagnostics: return "维护与诊断"
         case .security: return "安全"
+        case .recovery: return "我锁在门外了"
         case .backup: return "备份与恢复"
         case .appearance: return "外观"
         case .about: return "关于"

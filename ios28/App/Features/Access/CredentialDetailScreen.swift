@@ -8,7 +8,7 @@ struct CredentialDetailScreen: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var revealed = false
-    @State private var confirmingDelete = false
+    @State private var confirmingDelete: Bool? = nil
     /// 删除是一条真实的锁端命令，等待期间两个删除入口都不能再点。
     @State private var deleting = false
     @State private var editingWindow = false
@@ -31,12 +31,12 @@ struct CredentialDetailScreen: View {
         .sheet(isPresented: $editingWindow) {
             if let item { ExpirySheet(item: item) }
         }
-        .confirmationDialog("删除这枚凭证？", isPresented: $confirmingDelete, titleVisibility: .visible) {
+        .itemConfirmationDialog("删除这枚凭证？", item: $confirmingDelete, titleVisibility: .visible) { _ in
             Button("删除", role: .destructive) {
                 Task { await remove() }
             }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("锁端会同步删除，无法恢复。")
         }
         // 明文只该在“用户正看着这一屏”的时候出现：
@@ -177,6 +177,15 @@ struct CredentialDetailScreen: View {
                             chipLabel("复制", symbol: "doc.on.doc")
                         }
                         .buttonStyle(PressStyle())
+
+                        // F19：临时码可以直接发出去 —— 一张带有效期的分享卡，
+                        // 对方收到就能输入，不需要再解释「这是前门的码」。
+                        if item.kind == .temp, revealed, let plain = plainCode(item) {
+                            ShareLink(item: shareText(item, plain: plain)) {
+                                chipLabel("分享", symbol: "square.and.arrow.up")
+                            }
+                            .buttonStyle(PressStyle())
+                        }
                     } else if item.kind == .mobile {
                         Button {
                             copyMobile(item)
@@ -242,6 +251,20 @@ struct CredentialDetailScreen: View {
         }
     }
 
+    /// F19：分享卡的正文。**不含本机标识**（MAC、母钥），只有码、有效期与一句话用法。
+    private func shareText(_ item: Credential, plain: String) -> String {
+        var lines = ["临时密码：" + plain]
+        if let exp = item.expiresAt {
+            lines.append("有效期到：" + When.expiryLabel(exp))
+        }
+        if !item.name.isEmpty {
+            lines.append("用途：" + item.name)
+        }
+        lines.append("在门锁键盘上直接输入，不需要联网。")
+        return lines.joined(separator: "
+")
+    }
+
     private func plainCode(_ item: Credential) -> String? {
         guard let alias = item.alias else { return nil }
         return DB.ledger(app.currentMac).pwds.first { $0.alias == alias }?.pwd
@@ -281,8 +304,16 @@ struct CredentialDetailScreen: View {
     }
 
     private func toggleDisabled(_ item: Credential) {
-        CredentialLocalState.setDisabled(mac: app.currentMac, id: item.id, !item.disabled)
+        let next = !item.disabled
+        CredentialLocalState.setDisabled(mac: app.currentMac, id: item.id, next)
         app.reloadCredentials()
+        // F21：本机停用可以一键撤销 —— 它只改本机标记，撤销没有代价，
+        // 不给撤销就等于逼用户去「再点一次」找回刚才的状态。
+        AppToast.shared.show(next ? "已在本机停用" : "已恢复",
+                             action: AppToast.Action(title: "撤销") {
+            CredentialLocalState.setDisabled(mac: app.currentMac, id: item.id, !next)
+            app.reloadCredentials()
+        })
     }
 
     private func remove() async {

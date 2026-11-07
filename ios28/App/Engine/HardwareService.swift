@@ -43,7 +43,7 @@ final class HardwareService: ObservableObject {
                 w.cont.resume(returning: frame)
             }
         }
-        ble.bootstrap()
+        // 同 LockService（B44）：中心管理器按需创建，不在单例初始化时创建。
     }
     var debugRaw: Bool { DB.store.getBool("kf_debug_raw") }
     func log(_ msg: String) {

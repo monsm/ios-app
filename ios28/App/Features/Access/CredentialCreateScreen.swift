@@ -31,6 +31,8 @@ struct CredentialCreateScreen: View {
     @State private var errorLine: String?
     @State private var presses = 0
     @State private var enrollHint = ""
+    /// F43：部分成功（新码写进去了、旧码没删掉）—— 单独呈现，不混进「成功」。
+    @State private var partialResult: ScreenFailure?
 
     private let durations: [(title: String, hours: Double)] = [
         ("1 小时", 1), ("1 天", 24), ("7 天", 168), ("30 天", 720),
@@ -74,6 +76,12 @@ struct CredentialCreateScreen: View {
             SectionHead(index: kind == .temp ? "04" : "03", title: "归谁")
             ownerPicker
 
+            if let partialResult {
+                PartialSuccessCard(title: "新凭证已经写进门锁了", failure: partialResult)
+                    .padding(.top, 14)
+                PrimaryButton(title: "知道了") { dismiss() }
+                    .padding(.top, 14)
+            }
             if let errorLine {
                 Text(errorLine)
                     .type(T.F.caption)
@@ -98,7 +106,7 @@ struct CredentialCreateScreen: View {
             if newValue == .fingerprint {
                 value = ""
             } else {
-                value = Self.randomCode(6)
+                value = PinGenerator.generate(length: 6)
             }
         }
         .onAppear {
@@ -114,7 +122,7 @@ struct CredentialCreateScreen: View {
                 router.pendingCreateOwnerID = nil
             }
             if value.isEmpty, kind == .password {
-                value = Self.randomCode(6)
+                value = PinGenerator.generate(length: 6)
             }
         }
     }
@@ -149,7 +157,7 @@ struct CredentialCreateScreen: View {
                     if capped != newValue { value = capped }
                 }
                 Button {
-                    value = Self.randomCode(6)
+                    value = PinGenerator.generate(length: 6)
                 } label: {
                     Image(systemName: "dice")
                         .font(.system(size: 17))
@@ -172,6 +180,14 @@ struct CredentialCreateScreen: View {
                 Text("门锁键盘可以直接输入，不需要联网。")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.ink3)
+            }
+            // F19：弱模式提醒。123456 这种码「随机」出来也等于没随机 ——
+            // 门锁键盘只有数字，密码空间小，人更会挑好记的。
+            if value.count >= 4, let weak = PinGenerator.hint(value) {
+                Text("这串码\(weak) · 要换一个吗")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.danger)
+                    .padding(.top, 2)
             }
         }
     }
@@ -271,7 +287,9 @@ struct CredentialCreateScreen: View {
                                                owner: ownerID,
                                                note: name.isEmpty ? nil : name)
             switch result {
-            case .success: dismiss()
+            case .success:
+                // 部分成功时**不直接关页**：旧码还在锁里，用户得知道。
+                if let partial = app.lastPartial { partialResult = partial } else { dismiss() }
             case .failure(let error): errorLine = error.localizedDescription
             }
         case .temp:
@@ -289,7 +307,8 @@ struct CredentialCreateScreen: View {
                                                owner: ownerID,
                                                note: name.isEmpty ? "临时码" : name)
             switch result {
-            case .success: dismiss()
+            case .success:
+                if let partial = app.lastPartial { partialResult = partial } else { dismiss() }
             case .failure(let error): errorLine = error.localizedDescription
             }
         case .fingerprint:
@@ -314,16 +333,6 @@ struct CredentialCreateScreen: View {
     }
 
     // MARK: - 小工具
-
-    /// 门锁的键盘只有数字 —— 这里只生成数字串。
-    static func randomCode(_ count: Int) -> String {
-        var generator = SystemRandomNumberGenerator()
-        var out = ""
-        for _ in 0 ..< count {
-            out += String(Int.random(in: 0 ... 9, using: &generator))
-        }
-        return out
-    }
 
     /// 半角数字串才算数（iOS 的 `isNumber` 把全角数字也算数字，而锁的键盘打不出全角）。
     static func isNumeric(_ value: String) -> Bool {

@@ -16,6 +16,11 @@ struct LogScreen: View {
     /// 而 ScreenScroll 是急渲染的 VStack —— 一次摆几千行会卡。默认渲染最新 400 条，
     /// 「显示更早」按 400 递增；数据本身全在缓存里，搜索/洞察不受此窗口限制。
     @State private var timelineLimit = 400
+    /// F22：备注输入的目标记录（弹层里改）。
+    @State private var noteTarget: EventItem?
+    /// iOS 27：当前展开着轻扫操作的那一行（展开时压暗，收起时恢复）。
+    @State private var swipedEventID: String?
+    @State private var noteDraft = ""
 
     var body: some View {
         ScreenScroll {
@@ -62,13 +67,17 @@ struct LogScreen: View {
             }
 
             let groups = grouped
-            if groups.isEmpty {
-                EmptyNote(line: emptyTitle,
-                          detail: emptyDetail,
-                          action: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? "读取日志" : nil,
-                          run: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? { Task { await read() } } : nil)
-            } else {
-                ForEach(groups) { group in
+            // F37：这一屏走统一的状态模型 —— 空态由 StateSection 渲染，
+            // 页面不再自己写「if 空 { EmptyNote } else { 列表 }」。
+            StateSection(state: groups.isEmpty ? .empty : .data(groups),
+                         empty: EmptyNote(line: emptyTitle,
+                                          detail: emptyDetail,
+                                          action: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? "读取日志" : nil,
+                                          run: (query.isEmpty && !onlyFlagged && !DB.isDecoy) ? { Task { await read() } } : nil)) { groups in
+                // B40：LazyVStack —— 时间线可能有几百行，一次性摆完会掉帧。
+                // LazyVStack 只渲染屏幕内与附近的行；数据本身全在缓存里。
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(groups) { group in
                     DayHead(time: group.time, title: group.title)
                     ForEach(group.items) { event in
                         Button {
@@ -77,6 +86,70 @@ struct LogScreen: View {
                             EventRow(event: event, showLock: true)
                         }
                         .buttonStyle(.plain)
+                        .opacity(swipedEventID == event.id ? 0.55 : 1)
+                        // F22 + iOS 27：轻扫操作。
+                        //
+                        // iOS 27 起 `swipeActions` 不再只认 List 的行 —— 自绘容器里的行
+                        // 也能用，只要容器挂了 `swipeActionsContainer()`（见 ScreenScroll）。
+                        // iOS 26 上这一路没有：长按菜单仍在（见下），功能不缺，只是手势不同。
+                        .swipeActionsCompat(edge: .leading, allowsFullSwipe: false) {
+                            Menu {
+                                if app.members.isEmpty {
+                                    Text("还没有成员")
+                                } else {
+                                    ForEach(app.members) { member in
+                                        Button(member.name) { claim(event, to: member) }
+                                    }
+                                }
+                            } label: {
+                                Label("认给谁", systemImage: "person.badge.plus")
+                            }
+                            .tint(T.C.brass)
+                        }
+                        .swipeActionsCompat(edge: .trailing, allowsFullSwipe: false,
+                                            onPresentationChanged: { shown in
+                            swipedEventID = shown ? event.id : (swipedEventID == event.id ? nil : swipedEventID)
+                        }) {
+                            Button {
+                                noteTarget = event
+                                noteDraft = event.note ?? ""
+                            } label: {
+                                Label("加备注", systemImage: "text.bubble")
+                            }
+                            .tint(T.C.brass)
+                            Button {
+                                markPending(event)
+                            } label: {
+                                Label(event.flagged ? "取消待查" : "标记待查", systemImage: event.flagged ? "flag.slash" : "flag")
+                            }
+                            .tint(T.C.brass)
+                        }
+                        // 长按菜单：iOS 26 的等价入口，也是鼠标与键盘用户的路径。
+                        .contextMenu {
+                            Menu {
+                                if app.members.isEmpty {
+                                    Text("还没有成员")
+                                } else {
+                                    ForEach(app.members) { member in
+                                        Button(member.name) { claim(event, to: member) }
+                                    }
+                                }
+                            } label: {
+                                Label("认给谁", systemImage: "person.badge.plus")
+                            }
+                            Button {
+                                noteTarget = event
+                                noteDraft = event.note ?? ""
+                            } label: {
+                                Label("加备注", systemImage: "text.bubble")
+                            }
+                            Button {
+                                markPending(event)
+                            } label: {
+                                Label(event.flagged ? "取消待查" : "标记待查", systemImage: event.flagged ? "flag.slash" : "flag")
+                            }
+                        }
+                    }
                     }
                 }
                 // 渲染窗口之外还有更早的记录 —— 数据在缓存里，按需展开。
@@ -102,6 +175,43 @@ struct LogScreen: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        // F22：备注弹层。
+        // iOS 27：基于数据的弹窗（一个可选值就是全部状态）。
+        // iOS 26：同一套语义用 isPresented + presenting 复刻（见 itemAlert）。
+        .itemAlert("加备注", item: $noteTarget) { _ in
+            TextField("备注（最多 60 字）", text: $noteDraft)
+            Button("取消", role: .cancel) { noteTarget = nil }
+            Button("保存") { saveNote() }
+        } message: { _ in
+            Text("只写在本机，不改门锁里的记录。")
+        }
+    }
+
+    // MARK: - 时间线上的处置动作（F22）
+
+    private func rowKey(_ event: EventItem) -> String {
+        String(event.id.split(separator: "#").last ?? "")
+    }
+
+    private func claim(_ event: EventItem, to member: MemberCard) {
+        MemberHub.claim(event.mac, logKey: rowKey(event), memberId: member.id)
+        AppToast.shared.show("已认给 \(member.name)")
+        app.reloadEvents()
+    }
+
+    private func markPending(_ event: EventItem) {
+        let now = RecordOverlay.toggleFlag(event.mac, rowKey(event))
+        AppToast.shared.show(now ? "已标记待查" : "已取消待查")
+        app.reloadEvents()
+    }
+
+    private func saveNote() {
+        guard let event = noteTarget else { return }
+        RecordOverlay.setNote(event.mac, rowKey(event), String(noteDraft.prefix(60)))
+        noteTarget = nil
+        noteDraft = ""
+        AppToast.shared.show("已保存备注")
+        app.reloadEvents()
     }
 
     private var emptyTitle: String {

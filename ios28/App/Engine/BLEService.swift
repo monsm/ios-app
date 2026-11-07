@@ -108,12 +108,27 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             ])
         }
     }
+
+    /// **首次真正要用蓝牙时**才创建中心管理器（B44 启动预算）。
+    ///
+    /// 过去 `LockService.init` / `HardwareService.init` 就 `bootstrap()` ——
+    /// 而这两个单例在冷启动时被 `AppModel` 摸到，于是**一进 App 就创建 CBCentralManager**：
+    /// 系统弹蓝牙权限、扫描器起来、耗电开始 —— 全都是首页用不到的东西。
+    ///
+    /// 现在改成「用之前才建」：所有真正会碰 CoreBluetooth 的入口
+    /// （connect / startScan / waitReady / readLinkRSSI）都先调它。
+    func ensureBootstrapped() {
+        if manager == nil { bootstrap() }
+    }
+
     /// 供体检/诊断读**真实**蓝牙状态。nil = 中心管理尚未创建。
     /// 诊断侧不要自己 `CBCentralManager()`: 无代理的实例永远停在 .unknown, 会把"蓝牙正常"判成"蓝牙未开启"。
     var powerState: CBManagerState? { manager?.state }
     /// 等待蓝牙就绪。首装时权限弹窗未答复期间 state 恒 .unknown, 直接判"未开启"会误导;
     /// 仿 DFUKit 的就绪等待, 超时后按真实 state 给可操作文案 (权限/开关/不支持分开)。
     func waitReady(timeoutMs: Int = 3000) async throws {
+        // 中心管理器按需创建（B44）：等就绪之前必须先有它，否则这里会空转到超时。
+        ensureBootstrapped()
         let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
         while manager == nil || !isPoweredOn {
             if Date() > deadline { throw BLEErrorX.msg(readyMessage()) }
@@ -253,6 +268,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 
     // ---------- 连接 ----------
     func connect(deviceId: String, timeoutMs: Int = 20000) async throws {
+        ensureBootstrapped()
         try await waitReady()
         if connectedPeripheralId == deviceId, device?.state == .connected { return }
         disconnect()
@@ -334,6 +350,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     ///
     /// 失败/超时都给 nil 而不是编一个数: "读不到"与"读到 -80"是两件事 (与安卓同一口径)。
     func readLinkRSSI(timeoutMs: Int = 1500, completion: @escaping (Int?) -> Void) {
+        ensureBootstrapped()
         guard let d = device, d.state == .connected else { completion(nil); return }
         // 同一时刻只有一个等待位。后来者覆盖前，必须先把**旧等待者**以 nil 结束：
         // 旧实现的超时闭包发现代次变了就直接 return，于是旧调用方的 continuation

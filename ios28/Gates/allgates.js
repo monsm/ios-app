@@ -12,6 +12,7 @@ const gates = [
   ['lineage', '与上一版设计切割'],
   ['destmap', 'Dest ↔ View 一一对应'],
   ['contrast', 'WCAG 对比度'],
+  ['l10n', '文案 key 完整性'],
 ];
 
 let failed = 0;

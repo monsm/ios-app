@@ -120,18 +120,15 @@ struct WriteConsoleSheet: View {
                 }
             }
         }
-        .confirmationDialog(pending?.title ?? "", isPresented: Binding(
-            get: { pending != nil },
-            set: { if !$0 { pending = nil } }
-        ), titleVisibility: .visible) {
-            Button("发送", role: pending?.destructive == true ? .destructive : nil) {
-                guard let cmd = pending else { return }
+        // iOS 27：以「待发的那条命令」为状态。
+        .itemConfirmationDialog(pending?.title ?? "", item: $pending, titleVisibility: .visible) { cmd in
+            Button("发送", role: cmd.destructive ? .destructive : nil) {
                 pending = nil
                 Task { await fire(cmd) }
             }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text(pending?.detail ?? "")
+            Button("取消", role: .cancel) { pending = nil }
+        } message: { cmd in
+            Text(cmd.detail)
         }
         .presentationDetents([.large])
     }

@@ -148,6 +148,82 @@ final class Store: @unchecked Sendable {
     func keys() -> [String] {
         defaults.dictionaryRepresentation().keys.filter { $0.hasPrefix("kf.") }.map { String($0.dropFirst(3)) }
     }
+    // MARK: - 关键键：备份 + 版本（B1 / B3）
+
+    /// 关键键：写时留一份备份，读时主份解不出来就回落备份。
+    ///
+    /// 判据：台账 / 成员 / 钥匙串 / 日志缓存 / 手机钥匙 / 硬件档案 ——
+    /// 这些丢了就是**真丢数据**（没有服务器可以再拉回来）。
+    /// UserDefaults 的单键写不是事务：进程在写一半时被杀，值可能被截断。
+    /// 备份位存的是**上一次成功写入的内容**，所以它永远是一份能解的完整数据。
+    static let criticalPrefixes = ["kf_ledger_", "kf_members", "kf_member_ext",
+                                    "kf_keychains", "kf_logcache_", "kf_mkey_",
+                                    "kf_keychain_dongles", "kf_gateways", "kf_claims_"]
+    /// 备份键的后缀。
+    static let backupSuffix = ".bak"
+    /// 逐键版本表（键 → 写入时的 schema 版本）。
+    static let versionTableKey = "kf_schema_keys"
+
+    func isCriticalKey(_ k: String) -> Bool {
+        Store.criticalPrefixes.contains { k.hasPrefix($0) }
+    }
+
+    /// 写关键键：主份 + 备份（旧的）+ 版本号。
+    func setCritical<T: Encodable>(_ k: String, _ v: T) {
+        guard let data = try? JSONEncoder().encode(v) else {
+            recordFailure(k, "关键键编码失败")
+            return
+        }
+        // 先把旧值挪到备份位 —— 万一这次写进去的是坏的，备份还在。
+        if let old = defaults.data(forKey: key(k)) {
+            defaults.set(old, forKey: key(k + Store.backupSuffix))
+        }
+        defaults.set(data, forKey: key(k))
+        invalidateCache(k)
+        corruptKeys.withLock { $0.remove(k) }
+        setSchemaVersion(k, SchemaVersion.current)
+    }
+
+    /// 读关键键：主份 → 备份 → nil。
+    ///
+    /// 备份能用而主份不能用 ⇒ 主份坏了：把备份写回主份并记一笔（**自愈**），
+    /// 用户不会因为一次坏写就丢掉整本台账。
+    func getCritical<T: Decodable>(_ k: String, _ type: T.Type) -> T? {
+        // 版本比当前代码新 ⇒ 数据是更老/更新的 App 写的，不认（否则会误解出半截数据）。
+        let v = schemaVersion(k)
+        if v > SchemaVersion.current {
+            recordFailure(k, "数据版本 \(v) 比本 App 认识的版本 \(SchemaVersion.current) 新，已跳过")
+            return nil
+        }
+        if let value = get(k, type) { return value }
+        guard let d = defaults.data(forKey: key(k + Store.backupSuffix)),
+              let value = try? JSONDecoder().decode(T.self, from: d) else { return nil }
+        // 主份坏了、备份能用 ⇒ 用备份把它救回来。
+        recordFailure(k, "主份解码失败，已从备份恢复")
+        defaults.set(d, forKey: key(k))
+        invalidateCache(k)
+        return value
+    }
+
+    /// 原样写回一段字节（救援用：不重新编码，保持字节不变）。
+    func restoreRaw(_ k: String, _ data: Data) {
+        defaults.set(data, forKey: key(k))
+        invalidateCache(k)
+        corruptKeys.withLock { $0.remove(k) }
+    }
+
+    /// 逐键版本号。
+    func schemaVersion(_ k: String) -> Int {
+        let table = get(Store.versionTableKey, [String: Int].self) ?? [:]
+        return table[k] ?? 0
+    }
+
+    func setSchemaVersion(_ k: String, _ v: Int) {
+        var table = get(Store.versionTableKey, [String: Int].self) ?? [:]
+        table[k] = v
+        setCodable(Store.versionTableKey, table)
+    }
+
     /// 421 回滚快照: 原样读出 defaults 里那段 JSON Data。
     /// 不走 get/JSONDecoder —— 快照要的是**字节不变**，重新编码会把形状 (键序/可选字段) 改写一遍。
     func rawData(_ k: String) -> Data? { defaults.data(forKey: key(k)) }

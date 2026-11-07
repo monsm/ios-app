@@ -33,6 +33,11 @@ final class SettingsStore {
     /// 底栏形态（I6）：false = 浮岛玻璃胶囊（默认，像素与旧版一致）；
     /// true = 原生系统标签栏（真系统材质、滚动收起、VoiceOver 标签语义）。
     private(set) var nativeTabBar = false
+    /// 首页显示哪些分区（F54）：readings / tray / recent。
+    /// 默认三块都在 —— 可编排是给「屏幕小、只想看一样东西」的人准备的，不是默认形态。
+    private(set) var homeSections: [String] = ["readings", "tray", "recent"]
+    /// 音效开关（F30）。默认关 —— 门锁这个场景不该突然出声。
+    private(set) var sound = false
 
     private init() { load() }
 
@@ -48,6 +53,9 @@ final class SettingsStore {
         accent = DB.store.getString("kf_accent")
         accentCustom = DB.store.getInt("kf_accent_custom", 0)
         nativeTabBar = DB.store.getBool("kf_native_tabbar", false)
+        let sections = DB.store.get([String].self, "kf_home_sections") ?? ["readings", "tray", "recent"]
+        homeSections = sections.isEmpty ? ["readings", "tray", "recent"] : sections
+        sound = DB.store.getBool("kf_sound", false)
     }
 
     /// Engine（BackupKit）恢复完外观偏好后调这个：界面据此重读。
@@ -111,6 +119,19 @@ final class SettingsStore {
     func setNativeTabBar(_ value: Bool) {
         DB.store.set("kf_native_tabbar", value)
         nativeTabBar = value
+    }
+
+    /// F54：首页分区。顺序即显示顺序。
+    func setHomeSections(_ value: [String]) {
+        let v = value.isEmpty ? ["readings", "tray", "recent"] : value
+        DB.store.set("kf_home_sections", v)
+        homeSections = v
+    }
+
+    /// F30：音效开关（默认关）。
+    func setSound(_ value: Bool) {
+        DB.store.set("kf_sound", value)
+        sound = value
     }
 
     /// 主题是否深色（供根视图覆盖系统外观）。

@@ -244,6 +244,65 @@ struct CredentialsSection: View {
             }
         }
         .buttonStyle(.plain)
+        // iOS 27：轻扫操作（自绘容器里的行要靠容器上的 swipeActionsContainer 才生效，
+        // 见 ScreenScroll）。iOS 26 上这一路没有，长按菜单仍在（见下）。
+        .swipeActionsCompat(edge: .trailing, allowsFullSwipe: false) {
+            Button {
+                toggleDisabled(item)
+            } label: {
+                Label(item.disabled ? "恢复使用" : "本机停用",
+                      systemImage: item.disabled ? "play.circle" : "pause.circle")
+            }
+            .tint(T.C.brass)
+            if item.kind == .password || item.kind == .temp {
+                Button {
+                    copyCode(item)
+                } label: {
+                    Label("复制明文", systemImage: "doc.on.doc")
+                }
+                .tint(T.C.brass)
+            }
+        }
+        // F21：长按给一组不常用的动作 —— 复制、停用、到期处理。
+        // 删除与吊销仍然留在详情页（那里有确认），这里不重复一份不可逆的入口。
+        .contextMenu {
+            if item.kind == .password || item.kind == .temp {
+                Button {
+                    copyCode(item)
+                } label: {
+                    Label("复制明文", systemImage: "doc.on.doc")
+                }
+            }
+            Button {
+                toggleDisabled(item)
+            } label: {
+                Label(item.disabled ? "恢复使用" : "本机停用", systemImage: item.disabled ? "play.circle" : "pause.circle")
+            }
+        }
+    }
+
+    /// 复制明文（复制后 90 秒自动清除，与详情页同一口径）。
+    private func copyCode(_ item: Credential) {
+        guard let alias = item.alias,
+              let plain = DB.ledger(app.currentMac).pwds.first(where: { $0.alias == alias })?.pwd,
+              !plain.isEmpty else {
+            AppToast.shared.show("这枚凭证没有存下明文，无法复制。")
+            return
+        }
+        Clip.set(plain)
+        AppToast.shared.show("已复制 · 90 秒后自动清除")
+    }
+
+    /// 本机停用/恢复 —— 带撤销（F21）。
+    private func toggleDisabled(_ item: Credential) {
+        let next = !item.disabled
+        CredentialLocalState.setDisabled(mac: app.currentMac, id: item.id, next)
+        app.reloadCredentials()
+        AppToast.shared.show(next ? "已在本机停用" : "已恢复",
+                             action: AppToast.Action(title: "撤销") {
+            CredentialLocalState.setDisabled(mac: app.currentMac, id: item.id, !next)
+            app.reloadCredentials()
+        })
     }
 
     private func subtitle(_ item: Credential) -> String {

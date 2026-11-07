@@ -23,7 +23,7 @@ struct BackupScreen: View {
     @State private var errorLine: String?
     /// 校验和不一致时的二次确认。Engine 的裁量是「不硬拒、但要用户点头」
     /// （`BackupStudio.checksumNeedsAck`）—— 第一次点「恢复」只弹这一问，确认后才真写盘。
-    @State private var checkingChecksum = false
+    @State private var checkingChecksum: Bool? = nil
     // A5：系统文件选择器 —— 导出存到「文件」，导入从文件读回。
     @State private var showExporter = false
     @State private var showImporter = false
@@ -223,10 +223,10 @@ struct BackupScreen: View {
             case .failure(let e): errorLine = "选文件失败：" + e.localizedDescription
             }
         }
-        .confirmationDialog("校验和不一致，仍然恢复？", isPresented: $checkingChecksum, titleVisibility: .visible) {
+        .itemConfirmationDialog("校验和不一致，仍然恢复？", item: $checkingChecksum, titleVisibility: .visible) { _ in
             Button("仍然恢复", role: .destructive) { Task { await performRestore() } }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("这份备份的内容与它自带的校验和不一致 —— 可能是导出后被改过，也可能是旧版本 App 的算法不同。确认来源可信再继续。")
         }
     }

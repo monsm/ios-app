@@ -23,6 +23,12 @@ struct UnlockLens: View {
     var enabled: Bool = true
     var action: () -> Void
 
+    /// F29：失败时盘面轻轻收缩 —— 失败要**收**而不是炸。
+    /// （成功时的「推开」由 iOS 26 的玻璃变形承担，不再另画一个假动画。）
+    @State private var recoil: Bool = false
+    /// iOS 26：玻璃变形的身份空间（镜片成功时从「镜头」morph 成「光圈」）。
+    @Namespace private var morphNS
+
     private var ringProgress: Double {
         switch phase {
         case .idle: return 0
@@ -69,10 +75,15 @@ struct UnlockLens: View {
             ZStack {
                 // 镜头是整页唯一的仪式感动作，也是浮在日光窗上的功能控件：
                 // 真玻璃让背后的窗景参与折射，比材料模糊更像"一片厚玻璃"。
-                Circle()
-                    .fill(.clear)
-                    .liquidGlass(in: Circle(), tint: GlassMetrics.tint)
-                    .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
+                //
+                // iOS 26+：这一片玻璃是**可变形**的 —— 开锁成功时它会真的推开成一圈光。
+                if #available(iOS 26.0, *) {
+                    LensGlass26(opened: phase == .opened, namespace: morphNS)
+                        .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
+                } else {
+                    LensGlassLegacy(opened: phase == .opened)
+                        .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
+                }
 
                 Circle()
                     .strokeBorder(T.C.brassBright.opacity(0.28), lineWidth: 1.5)
@@ -92,6 +103,8 @@ struct UnlockLens: View {
                                        startRadius: 1, endRadius: 26)
                     )
                     .frame(width: 44, height: 44)
+                    // F29：失败时盘面收一下 —— 失败要收，不要炸。
+                    .scaleEffect(recoil ? 0.86 : 1)
                     .shadow(color: T.C.brassWash, radius: 14)
                     .overlay {
                         Image(systemName: glyph)
@@ -99,14 +112,10 @@ struct UnlockLens: View {
                             // 深色模式的黄铜是亮色实底：白字形只有 1.9:1，
                             // 换自适应前景色（浅色白 / 深色近黑）才看得清。
                             .foregroundStyle(T.C.onAccent.opacity(0.95))
+                            // 图标随相位自己换形（锁 → 对勾 → 叉），不是硬切。
+                            .symbolEffect(.replace, value: glyph)
                     }
 
-                if phase == .opened {
-                    Circle()
-                        .stroke(T.C.brassBright.opacity(0.35), lineWidth: 1)
-                        .scaleEffect(1.28)
-                        .opacity(0)
-                }
             }
             .frame(width: 116, height: 116)
             // 玻璃层已不参与命中；镜头整圆都该是开锁键，不能只剩中间 44pt 的盘面。
@@ -127,6 +136,16 @@ struct UnlockLens: View {
         .accessibilityLabel("开锁")
         .accessibilityHint("连接门锁并下发开锁命令")
         .accessibilityValue(caption)
+        .onChange(of: phase) { _, new in
+            switch new {
+            case .opened:
+                recoil = false
+            case .failed:
+                withAnimation(T.M.snap) { recoil = true }
+            default:
+                recoil = false
+            }
+        }
     }
 }
 
@@ -198,8 +217,14 @@ struct GhostButton: View {
 
 // MARK: - 选择胶囊
 
-/// 可点的选择胶囊。选中态用黄铜实底（品牌语义），未选中态是真玻璃。
-/// 所有「多选一」的胶囊都走这里 —— 圆角、描边、染色不再各写一份。
+/// 可点的选择胶囊。
+///
+/// iOS 26+：用**系统**的玻璃按钮（`.glass` / `.glassProminent`）。
+/// 为什么不再自绘表面：系统的玻璃按钮自带**按压反馈、焦点环、无障碍选中态**，
+/// 以及「减少透明度 / 增强对比度」下的正确退化 —— 自绘只解决了视觉。
+/// 胶囊也正是系统玻璃的默认形状（`Glass` 默认 Capsule），形状口径天然一致。
+///
+/// iOS 25 走自绘：选中 = 黄铜实底，未选中 = 本仓的液态玻璃。
 struct ChoiceChip: View {
     var title: String
     var symbol: String? = nil
@@ -211,7 +236,17 @@ struct ChoiceChip: View {
     var action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        if #available(iOS 26.0, *) {
+            systemChip
+        } else {
+            legacyChip
+        }
+    }
+
+    /// iOS 26+：系统玻璃按钮样式。
+    @ViewBuilder
+    private var systemChip: some View {
+        let button = Button(action: action) {
             HStack(spacing: 6) {
                 if let symbol {
                     Image(systemName: symbol)
@@ -221,7 +256,28 @@ struct ChoiceChip: View {
                     .type(T.F.caption)
                     .fontWeight(.medium)
             }
-            .foregroundStyle(on ? T.C.onAccent : T.C.ink)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: fillWidth ? .infinity : nil)
+            .frame(height: height)
+        }
+        button
+            .systemGlassButton(prominent: on, tint: on ? onColor : nil)
+    }
+
+    /// iOS 25：自绘表面（选中 = 黄铜实底，未选中 = 液态玻璃）。
+    private var legacyChip: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let symbol {
+                    Image(systemName: symbol)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(on ? .white : T.C.brass)
+                }
+                Text(title)
+                    .type(T.F.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(on ? .white : T.C.ink)
+            }
             .padding(.horizontal, 14)
             .frame(maxWidth: fillWidth ? .infinity : nil)
             .frame(height: height)
@@ -359,6 +415,16 @@ struct ScreenScroll<Content: View>: View {
             .padding(.bottom, 118)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // iOS 27：让**自定义容器**里的行也能用轻扫操作。
+        //
+        // 以前 `swipeActions` 只认 `List` 的行 —— 本 App 的时间线是自绘 ScrollView，
+        // 于是「左滑处置一条记录」在 iOS 26 上根本做不到（只能长按）。
+        // 容器自己负责协调：一次只展开一行、滚动即收起、点外面即收起。
+        .iOS27SwipeContainer()
+        // iOS 26+：内容从浮岛 Tab 栏底下滚过时，底边自动柔化 ——
+        // 浮动栏就该有这层过渡，而不是硬切过去。
+        // 系统标签栏形态下由系统自己处理边缘，两层柔化会叠在一起 —— 那里就不加。
+        .softScrollEdge(SettingsStore.shared.nativeTabBar ? [] : .bottom)
     }
 }
 
@@ -433,14 +499,6 @@ struct TabBar: View {
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
-                    .overlay(alignment: .bottom) {
-                        if index == selection {
-                            Circle()
-                                .fill(T.C.brass)
-                                .frame(width: 3, height: 3)
-                                .offset(y: -4)
-                        }
-                    }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -467,6 +525,21 @@ struct TabBar: View {
             .accessibilityLabel("设置")
         }
         .padding(.horizontal, 8)
+        // F33：选中点从「画在每个标签里」改成「**一个点滑过去**」。
+        // 同一个视图在三个标签之间移动 —— 这就是这条路上唯一说得通的 shared element：
+        // 三个 Tab 各有一条导航栈，跨栈的 matchedGeometry 传不过去，
+        // 而选中点的连续移动能保住「我还站在同一个位置」的空间感。
+        .overlay(alignment: .bottom) {
+            GeometryReader { geo in
+                Circle()
+                    .fill(T.C.brass)
+                    .frame(width: 3, height: 3)
+                    .position(x: geo.size.width * (Double(selection) + 0.5) / 4.0,
+                              y: geo.size.height - 6)
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
         // Tab 栏是浮在内容之上、每个标签都可点的功能层 —— 原生液态玻璃最合适的位置。
         .liquidGlass(in: RoundedRectangle(cornerRadius: GlassMetrics.barRadius, style: .continuous),
                      tint: GlassMetrics.tint, interactive: true)

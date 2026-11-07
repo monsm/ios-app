@@ -154,7 +154,7 @@ enum MemberHub {
     // 保留此说明，是为了不让人去 `MemberHub` 里找别名逻辑（它在 CredentialOrg）。
 
     // ---------- 活跃度推断 (⚠262/459/466: 台账口径, 必须带"约") ----------
-    struct Activity {
+    struct Activity: Sendable {
         var opens30: Int = 0
         var month: Int = 0
         var last: String = ""
@@ -181,7 +181,7 @@ enum MemberHub {
     ///
     /// 这里改成**一次遍历**：外层走锁，内层把每条归属结果直接累加到对应成员；
     /// 顺带把访客虚拟分组的两项统计（开门数 / 名下临时码数）一起算出来。
-    struct ActivityBundle {
+    struct ActivityBundle: Sendable {
         var table: [String: Activity] = [:]
         var visitorOpens = 0
         var visitorTemps = 0

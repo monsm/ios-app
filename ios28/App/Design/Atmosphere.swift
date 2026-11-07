@@ -15,37 +15,49 @@ struct DaylightField: View {
     @State private var drift = false
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                T.C.canvas
-                LinearGradient(colors: [T.C.canvasTop, T.C.canvas, T.C.canvas],
-                               startPoint: .top, endPoint: .bottom)
+        // F28：日光场按**真实时刻**走 —— 太阳偏西时暖光团往左挪，
+        // 天黑后整层压暗。算式在 `Solar` 里（本地算，不联网）。
+        TimelineView(.periodic(from: .now, by: 60)) { ctx in
+            let phase = Solar.phase(at: ctx.date)
+            GeometryReader { geo in
+                ZStack {
+                    T.C.canvas
+                    LinearGradient(colors: [T.C.canvasTop, T.C.canvas, T.C.canvas],
+                                   startPoint: .top, endPoint: .bottom)
 
-                Circle()
-                    .fill(T.C.atmoWarm)
-                    .frame(width: geo.size.width * 1.15)
-                    .blur(radius: 90)
-                    .offset(x: geo.size.width * 0.34 + (drift ? 12 : -10),
-                            y: -geo.size.height * 0.30 + (drift ? 8 : -6))
-                    .opacity(0.75)
+                    Circle()
+                        .fill(T.C.atmoWarm)
+                        .frame(width: geo.size.width * 1.15)
+                        .blur(radius: 90)
+                        .offset(x: geo.size.width * Solar.warmOffset(phase) + (drift ? 12 : -10),
+                                y: -geo.size.height * 0.30 + (drift ? 8 : -6))
+                        .opacity(0.75 * (0.35 + 0.65 * phase.brightness))
 
-                Circle()
-                    .fill(T.C.atmoCool)
-                    .frame(width: geo.size.width * 0.9)
-                    .blur(radius: 80)
-                    .offset(x: -geo.size.width * 0.40, y: -geo.size.height * 0.34)
-                    .opacity(0.55)
+                    Circle()
+                        .fill(T.C.atmoCool)
+                        .frame(width: geo.size.width * 0.9)
+                        .blur(radius: 80)
+                        .offset(x: -geo.size.width * 0.40, y: -geo.size.height * 0.34)
+                        .opacity(0.55 * (0.4 + 0.6 * phase.brightness))
 
-                // 底部一层极淡的纸色回光，避免整页发灰。
-                LinearGradient(colors: [.clear, T.C.canvasDeep.opacity(0.55)],
-                               startPoint: .center, endPoint: .bottom)
-                    .opacity(0.6)
+                    // 底部一层极淡的纸色回光，避免整页发灰。
+                    LinearGradient(colors: [.clear, T.C.canvasDeep.opacity(0.55)],
+                                   startPoint: .center, endPoint: .bottom)
+                        .opacity(0.6)
+
+                    // 夜里再压一层 —— 不是变黑，是把光收走。
+                    Rectangle()
+                        .fill(T.C.canvasDeep)
+                        .opacity(0.28 * (1 - phase.brightness))
+                }
+                .animation(reduceMotion ? nil : .easeInOut(duration: T.M.driftDuration).repeatForever(autoreverses: true),
+                           value: drift)
+                .onAppear { if !reduceMotion { drift = true } }
             }
-            .animation(reduceMotion ? nil : .easeInOut(duration: T.M.driftDuration).repeatForever(autoreverses: true),
-                       value: drift)
-            .onAppear { if !reduceMotion { drift = true } }
         }
         .ignoresSafeArea()
+        // iOS 26+：背景在安全区外延展 —— iPad 分屏与侧边栏时，日光不会在边缘被裁断。
+        .extendBackground()
     }
 }
 

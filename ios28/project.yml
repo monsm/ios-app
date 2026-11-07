@@ -6,7 +6,9 @@ name: Threshold
 options:
   bundleIdPrefix: com.aapk
   deploymentTarget:
-    iOS: "27.0"
+    # iOS 25 起：iOS 26 的 Liquid Glass 与 iOS 27 的新容器/弹窗能力各走各的
+    # availability 分支，iOS 25 走等价的材质降级（功能完全一致，见 Design/Modern.swift）。
+    iOS: "25.0"
   createIntermediateGroups: true
   developmentLanguage: zh-Hans
 
@@ -33,7 +35,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.aapk.threshold
         INFOPLIST_FILE: App/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        TARGETED_DEVICE_FAMILY: "1"
+        # F12/B64：iPhone + iPad。iPad 上今日页走左右两栏（见 AdaptiveLayout）。
+        TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
         CURRENT_PROJECT_VERSION: "1"
     info:
@@ -45,9 +48,17 @@ targets:
         # 只使用 Apple 系统提供的标准算法（CommonCrypto AES / Keychain），
         # 用于与自家门锁的配对认证和本机数据保护。
         ITSAppUsesNonExemptEncryption: false
-        UILaunchScreen: {}
+        # F36：启动屏用画布色 —— 与日光窗同一张纸，冷启动不闪白。
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # iPad：横竖都支持（宽版两栏版式）。
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UIUserInterfaceStyle: Automatic
         NSBluetoothAlwaysUsageDescription: 需要蓝牙连接你的门锁。门锁通信不经过网络。
         NSBluetoothPeripheralUsageDescription: 需要蓝牙连接你的门锁。

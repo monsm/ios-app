@@ -405,7 +405,33 @@ extension LockService {
         return StatusParser.intHex(k.val)
     }
 
+    /// 命令执行入口。**唯一**记时间线的地方（B19）：
+    /// 每条命令都留一条结构化记录（耗时 / rc / 结果 / 可能已执行），
+    /// 诊断页据此排「哪一步开始不对」，不用再翻自由文本日志。
     func exec(_ cmdObj: ZKCmd, needToken: Bool = true, retries: Int = 3) async throws -> ExecResult {
+        let t0 = Date()
+        do {
+            let r = try await execCore(cmdObj, needToken: needToken, retries: retries)
+            let ms = Int(Date().timeIntervalSince(t0) * 1000)
+            CommandTimeline.record(cmd: cmdObj.cmd, name: cmdObj.name,
+                                   outcome: r.rc == 0 ? "ok" : "rc=\(r.rc)",
+                                   ms: ms, rc: r.rc,
+                                   note: r.rc == 0 ? "" : StatusParser.rcFriendly(r.rc))
+            // 回放只留内存（B69）：原始帧里可能有凭据，不落盘。
+            CommandReplay.remember(hex: r.frame.raw, cmd: cmdObj.cmd, name: cmdObj.name)
+            return r
+        } catch {
+            let ms = Int(Date().timeIntervalSince(t0) * 1000)
+            let le = LockError.from(error, cmd: cmdObj.cmd)
+            CommandTimeline.record(cmd: cmdObj.cmd, name: cmdObj.name,
+                                   outcome: "失败", ms: ms,
+                                   mayHaveExecuted: le.mayHaveExecuted,
+                                   note: le.title)
+            throw error
+        }
+    }
+
+    func execCore(_ cmdObj: ZKCmd, needToken: Bool = true, retries: Int = 3) async throws -> ExecResult {
         let cmd = cmdObj.cmd
         let resp = try await request(cmdObj, cmd: cmd, needToken: needToken, retries: retries)
         let rc = extractRc(cmd, resp)

@@ -33,7 +33,9 @@ final class LockService: ObservableObject {
         ble.onFrame(owner: "lock") { [weak self] frame in
             Task { @MainActor in self?.handle(frame) }
         }
-        ble.bootstrap()
+        // 中心管理器**不在这里**创建（B44）：冷启动时本单例会被摸到，
+        // 那时创建 CBCentralManager 等于一进 App 就弹蓝牙权限、起扫描器。
+        // 真正要用蓝牙时由 BLEService.ensureBootstrapped() 按需创建。
     }
 
     /// 打开后 `TX hex=` / `RX hex=` **日志行**才会产生（`HardwareService` / `LockServiceLink` 同键同判）。

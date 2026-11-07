@@ -15,13 +15,20 @@ struct SecurityScreen: View {
     @State private var biometric = SettingsStore.shared.biometric
     /// 关掉本机密码要先问一句：这一步会把冷启动的门禁整个拆掉，
     /// 拿到手机的人可以直接看到全部凭证 —— 点错了没有第二道闸。
-    @State private var confirmingDisable = false
+    @State private var confirmingDisable: Bool? = nil
     /// 通知授权状态。
     ///
     /// Engine 的 `NotifyAuth.status` 是**同步**读的（内部 `DispatchSemaphore.wait` 最多 2 秒），
     /// 直接写在 body 里会让这一屏每次求值都卡住主线程 —— `label` 还会再读一次，合计最多 4 秒。
     /// 这里改成用系统自带的 async 接口读一次，缓存在状态里。
     @State private var notifyStatus: UNAuthorizationStatus = .notDetermined
+    /// B33：门禁策略（可调的三档）。
+    @State private var policy = AppLockPolicyStore.current()
+
+    /// 保存策略。改完立刻生效 —— 策略读的是同一份存储。
+    private func savePolicy() {
+        AppLockPolicyStore.save(policy)
+    }
 
     private enum SheetKind: String, Identifiable {
         case passcode, duress
@@ -103,9 +110,49 @@ struct SecurityScreen: View {
                     }
             }
 
+            // B33：门禁策略可调。原来这三档全是写死的常量。
+            if !DB.isDecoy {
+                SectionHead(index: "02", title: "门禁策略")
+                VStack(alignment: .leading, spacing: T.S.s) {
+                    Text("回前台多久后重新要密码")
+                        .type(T.F.callout)
+                        .foregroundStyle(T.C.ink)
+                    HStack(spacing: 8) {
+                        ForEach(AppLockPolicy.timeoutChoices, id: \.seconds) { c in
+                            ChoiceChip(title: c.label,
+                                       on: policy.foregroundLockSeconds == c.seconds,
+                                       height: 34) {
+                                policy.foregroundLockSeconds = c.seconds
+                                savePolicy()
+                            }
+                        }
+                    }
+                    Text("连续错几次开始冷却")
+                        .type(T.F.callout)
+                        .foregroundStyle(T.C.ink)
+                        .padding(.top, T.S.s)
+                    HStack(spacing: 8) {
+                        ForEach([3, 5, 7], id: \.self) { n in
+                            ChoiceChip(title: "\(n) 次",
+                                       on: policy.escalateAfter == n,
+                                       height: 34) {
+                                policy.escalateAfter = n
+                                savePolicy()
+                            }
+                        }
+                    }
+                    Text("冷却时长：\(policy.cooldown(for: max(policy.escalateAfter, 1))) 秒起步，之后越来越长。改慢一点更容易被猜，改快一点容易误伤。")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 2)
+                }
+                .padding(.vertical, T.S.s)
+            }
+
             // 只读试验会真的改写本机的只读开关：在空壳里打开它，退出后整个 App 都不能开锁。
             if !DB.isDecoy {
-                SectionHead(index: "02", title: "只读试验")
+                SectionHead(index: "03", title: "只读试验")
                 SwitchLine(title: "只读试验模式", detail: "开锁、写凭证、改锁设置、刷固件、导入备份全部被拦下。", isOn: $trial)
                     .onChange(of: trial) { _, value in
                         TrialGuard.set(value)
@@ -114,7 +161,7 @@ struct SecurityScreen: View {
             }
 
             // 空壳里「只读试验」整段不摆，编号要跟着连续，不能从 01 直接跳到 03。
-            SectionHead(index: DB.isDecoy ? "02" : "03", title: "状态")
+            SectionHead(index: DB.isDecoy ? "02" : "04", title: "状态")
             if DB.isDecoy {
                 // 空壳里不显示真实授权状态，也不给「去开启」的入口：
                 // 那会弹出系统权限框，并把“主人开过提醒”这件事写在脸上。
@@ -150,7 +197,7 @@ struct SecurityScreen: View {
             case .duress: PasscodeSheet(kind: .duress)
             }
         }
-        .confirmationDialog("关闭本机密码？", isPresented: $confirmingDisable, titleVisibility: .visible) {
+        .itemConfirmationDialog("关闭本机密码？", item: $confirmingDisable, titleVisibility: .visible) { _ in
             Button("关闭", role: .destructive) {
                 // 双保险：入口在空壳里已经隐藏，这里再守一道 —— 这条路径删的是真实的
                 // 冷启动密码与胁迫码，是空壳最不该拥有的能力。
@@ -162,7 +209,7 @@ struct SecurityScreen: View {
                 app.unlocked = !DB.hasPasscode()
             }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text(DB.hasDuressCode()
                  ? "冷启动不再询问。胁迫码也会一并清除 —— 没有门禁就输不进它，留着只会在你下次设密码时悄悄复活。凭证仍然在手机里，拿到手机的人可以直接打开。"
                  : "冷启动不再询问。凭证仍然在手机里，拿到手机的人可以直接打开。")
@@ -307,6 +354,15 @@ struct AppearanceScreen: View {
     @State private var customColor = T.C.rgb(0x7C5A31)
     // I6：底栏形态。
     @State private var nativeBar = SettingsStore.shared.nativeTabBar
+    // F30：音效。
+    @State private var sound = SettingsStore.shared.sound
+    // F54：首页分区。
+    @State private var homeSections = SettingsStore.shared.homeSections
+
+    /// 首页可选的三块（顺序即显示顺序）。
+    private static let homeSections: [(key: String, title: String)] = [
+        ("readings", "读数"), ("tray", "工具托盘"), ("recent", "最近")
+    ]
 
     /// 六套预设 + 默认黄铜。rgb 是**浅色档**展示色；深色档由令牌层自动抬亮。
     /// 色值与令牌层的 accentBase() 同源同值（ios27 同一组，白字对比 ≥4.5 自检过）。
@@ -412,8 +468,39 @@ struct AppearanceScreen: View {
                 .onChange(of: haptics) { _, value in SettingsStore.shared.setHaptics(value) }
             SwitchLine(title: "开门时保持亮屏", detail: "站在门口时不至于中途息屏。", isOn: $keepAwake)
                 .onChange(of: keepAwake) { _, value in SettingsStore.shared.setKeepScreenAwake(value) }
+            // F30：音效默认关 —— 掏钥匙的时候手机响一声是很吓人的。
+            SwitchLine(title: "音效", detail: "每一步的提示音。默认关闭。", isOn: $sound)
+                .onChange(of: sound) { _, value in SettingsStore.shared.setSound(value) }
 
-            SectionHead(index: "05", title: "底栏")
+            // F54：首页分区编排。默认三块都在 —— 这是给「只想看一样东西」的人准备的。
+            SectionHead(index: "05", title: "今日显示哪些")
+            HStack(spacing: 8) {
+                ForEach(Self.homeSections, id: \.key) { item in
+                    ChoiceChip(title: item.title,
+                               on: homeSections.contains(item.key),
+                               height: 36) {
+                        var next = homeSections
+                        if let idx = next.firstIndex(of: item.key) {
+                            next.remove(at: idx)
+                        } else {
+                            next.append(item.key)
+                            // 顺序固定：读数 → 托盘 → 最近。
+                            next = next.sorted { a, b in
+                                (Self.homeSections.firstIndex { $0.key == a } ?? 0)
+                                    < (Self.homeSections.firstIndex { $0.key == b } ?? 0)
+                            }
+                        }
+                        homeSections = next
+                        SettingsStore.shared.setHomeSections(next)
+                    }
+                }
+            }
+            Text("至少留一块 —— 首页没有内容时它只剩一扇窗。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .padding(.top, 6)
+
+            SectionHead(index: "06", title: "底栏")
             // I6：两种形态。默认浮岛胶囊（像素与旧版一致）；原生系统栏自带
             // 滚动收起与系统材质，吃「减少透明度」等无障碍设置。
             SwitchLine(title: "原生系统标签栏",

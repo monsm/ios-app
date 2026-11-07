@@ -56,17 +56,16 @@ private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
                     shape.strokeBorder(T.C.glassEdge, lineWidth: edgeWidth)
                         .allowsHitTesting(false)
                 }
-        } else {
-            // 玻璃是"画"出来的一层，不该参与命中测试。
-            //
-            // 直接把 `.glassEffect` 挂在 content 上时，玻璃会作为独立的材质层进入
-            // 命中链：Button 的 label 只有文字/图标本身可点，玻璃圆面点下去没有
-            // 任何反应（头像就是这样"看着能点、实际点不动"）。把玻璃退到
-            // background 并显式关掉命中，Button 的 contentShape 才真正说了算。
+        } else if #available(iOS 26.0, *) {
+            // 玻璃参数在这里就地构造 —— `Glass` 这个类型本身就是 iOS 26+ 的，
+            // 写在属性/函数签名里会让整个修饰符都变成 26+ 专用。
+            var value = Glass.regular
+            if let tint { value = value.tint(tint) }
+            if interactive { value = value.interactive() }
             content
                 .background {
                     Color.clear
-                        .glassEffect(glass, in: shape)
+                        .glassEffect(value, in: shape)
                         .allowsHitTesting(false)
                 }
                 // 真实玻璃受光后上缘总有一条亮线。只加"厚度感"，不改变折射行为。
@@ -86,14 +85,30 @@ private struct LiquidGlassModifier<S: InsettableShape>: ViewModifier {
                     shape.strokeBorder(T.C.glassEdge, lineWidth: edgeWidth)
                         .allowsHitTesting(false)
                 }
+        } else {
+            // iOS 25 的降级路径：系统材质。
+            //
+            // 它不是玻璃（没有折射与高光），但**仍然是浮在内容之上的一层**，
+            // 观感与层级一致，功能与命中区完全相同。把部署目标调回 25 就能走到这里。
+            content
+                .background(.ultraThinMaterial, in: shape)
+                .overlay {
+                    shape
+                        .fill(
+                            LinearGradient(colors: [.white.opacity(highlightOpacity), .clear],
+                                           startPoint: .top, endPoint: .bottom)
+                        )
+                        .mask(alignment: .top) {
+                            Rectangle().frame(height: T.S.l)
+                        }
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+                .overlay {
+                    shape.strokeBorder(T.C.glassEdge, lineWidth: edgeWidth)
+                        .allowsHitTesting(false)
+                }
         }
-    }
-
-    private var glass: Glass {
-        var value = Glass.regular
-        if let tint { value = value.tint(tint) }
-        if interactive { value = value.interactive() }
-        return value
     }
 }
 

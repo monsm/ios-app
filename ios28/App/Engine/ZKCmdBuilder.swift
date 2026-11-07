@@ -58,7 +58,7 @@ enum ZKCmdBuilder {
 
     // ---- 明文面 ----
     static func cmd01Session() -> ZKCmd {
-        ZKCmd(name: "01 会话令牌", cmd: 0x01, hex: ZKProtocol.buildFrame(0x01, "", header: 8))
+        ZKCmd(name: "01 会话令牌", cmd: 0x01, hex: ZKProtocol.buildFrame(0x01, "", header: ProtocolRegistry.header(for: 0x01)))
     }
     // 22/25 两条命令的**帧构造**保留: GoldenDiffTests 拿它们与 vendor JS 做字节对拍 (金标资产)。
     // 25 的 App 侧链路**在**（LockService.setDefence → DefendService → DefendView → 设置页入口），
@@ -74,10 +74,10 @@ enum ZKCmdBuilder {
     // 2026-10-27 审核说明 (AUDIT-A F-46)：`cmd23ExKeyWay` 三端都只发**裸帧**（无 wrap 变体），
     // 因为这条命令在 0x88 包络之外使用（配网前协商密钥交换方式，那时还没有 skey）。
     static func cmd23ExKeyWay() -> ZKCmd {
-        ZKCmd(name: "23 交换方式", cmd: 0x23, hex: ZKProtocol.buildFrame(0x23, "", header: 8))
+        ZKCmd(name: "23 交换方式", cmd: 0x23, hex: ZKProtocol.buildFrame(0x23, "", header: ProtocolRegistry.header(for: 0x23)))
     }
     static func cmd12Echo(_ valHex: String = "123456") -> ZKCmd {
-        ZKCmd(name: "12 回声", cmd: 0x12, hex: ZKProtocol.buildFrame(0x12, ZKProtocol.buildKLV(0x01, valHex), header: 8))
+        ZKCmd(name: "12 回声", cmd: 0x12, hex: ZKProtocol.buildFrame(0x12, ZKProtocol.buildKLV(0x01, valHex), header: ProtocolRegistry.header(for: 0x12)))
     }
     /// cmd 03 状态（明文帧，无 KLV）。
     /// 2026-10-27 审核修复 (AUDIT-A F-45)：**去掉未使用的 macHex 参数**。
@@ -86,7 +86,7 @@ enum ZKCmdBuilder {
     /// 调用点同步改成无参（`cmd03StatusPlain()`）。
     static func cmd03StatusPlain() -> ZKCmd {
         // JS cmd03Status(8, macHex, wrap=false) → 裸 03 帧 (无 KLV)
-        ZKCmd(name: "03 状态（明文）", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, "", header: 8))
+        ZKCmd(name: "03 状态（明文）", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, "", header: ProtocolRegistry.header(for: 0x03)))
     }
     // 2026-10-27 审核说明 (AUDIT-A F-38)：`cmd05Exchange` 硬编码 keyType=1（AES-128），
     // 没有参数可调。vendor 侧也是恒 1（`main.js` 的 exchangeSKey 只发这一种），
@@ -97,7 +97,7 @@ enum ZKCmdBuilder {
         let klv = ZKProtocol.buildKLV(0x01, HexKit.u32leHex(ts))
             + ZKProtocol.buildKLV(0x02, "01")
             + ZKProtocol.buildKLV(0x03, skeyHex)
-        return ZKCmd(name: "05 换钥", cmd: 0x05, hex: ZKProtocol.buildFrame(0x05, klv, header: 8))
+        return ZKCmd(name: "05 换钥", cmd: 0x05, hex: ZKProtocol.buildFrame(0x05, klv, header: ProtocolRegistry.header(for: 0x05)))
     }
 
     // ---- 密文管理面 ----
@@ -108,7 +108,7 @@ enum ZKCmdBuilder {
         // 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)
         if enc.isEmpty { return ZKCmd(name: "03 加密状态", cmd: 0x03, hex: "") }
         let klv = ZKProtocol.buildKLV(0x01, enc) + ZKProtocol.buildKLV(0x02, "")
-        return ZKCmd(name: "03 加密状态", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, klv, header: 8))
+        return ZKCmd(name: "03 加密状态", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, klv, header: ProtocolRegistry.header(for: 0x03)))
     }
     // cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文
     static func cmd04Open(_ ekeyHex: String, klv01Hex: String = "0000") -> ZKCmd {
@@ -116,7 +116,7 @@ enum ZKCmdBuilder {
         // "KLV#02 长度 0" 的开锁帧, 既可能被固件当异常包丢弃, 也可能被误读成一次真实开锁尝试。
         if ekeyHex.isEmpty { return ZKCmd(name: "04 开锁", cmd: 0x04, hex: "") }
         let klv = ZKProtocol.buildKLV(0x01, HexKit.fillZeroLeft(klv01Hex, 32)) + ZKProtocol.buildKLV(0x02, ekeyHex)
-        return ZKCmd(name: "04 开锁", cmd: 0x04, hex: ZKProtocol.buildFrame(0x04, klv, header: 8))
+        return ZKCmd(name: "04 开锁", cmd: 0x04, hex: ZKProtocol.buildFrame(0x04, klv, header: ProtocolRegistry.header(for: 0x04)))
     }
     // pin → LE 4B hex (数字或已是 8 hex 皆可 — JS pinToLE 双兼容)
     // 旧写法解析失败时回落 "00000000": 那是一个**合法 PIN 值**, 于是"读不到的凭证"会被签成
@@ -271,23 +271,23 @@ enum ZKCmdBuilder {
             + ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))
             + ZKProtocol.buildKLV(0x03, u16leHex(pid))
             + ZKProtocol.buildKLV(0x04, ekeyHex)
-        return ZKCmd(name: "41 钥匙串写钥", cmd: 0x41, hex: ZKProtocol.buildFrame(0x41, klv, header: 8))
+        return ZKCmd(name: "41 钥匙串写钥", cmd: 0x41, hex: ZKProtocol.buildFrame(0x41, klv, header: ProtocolRegistry.header(for: 0x41)))
     }
     static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {
         // 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。
         let m = (lockMacHex ?? "").replacingOccurrences(of: ":", with: "").lowercased()
         let v = m.isEmpty ? "" : HexKit.reversePairs(m)
-        return ZKCmd(name: "44 钥匙串查钥", cmd: 0x44, hex: ZKProtocol.buildFrame(0x44, ZKProtocol.buildKLV(0x01, v), header: 8))
+        return ZKCmd(name: "44 钥匙串查钥", cmd: 0x44, hex: ZKProtocol.buildFrame(0x44, ZKProtocol.buildKLV(0x01, v), header: ProtocolRegistry.header(for: 0x44)))
     }
     static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {
         var v = ""
         for m in lockMacList { v += HexKit.reversePairs(m.replacingOccurrences(of: ":", with: "").lowercased()) }
-        return ZKCmd(name: "43 钥匙串状态", cmd: 0x43, hex: ZKProtocol.buildFrame(0x43, ZKProtocol.buildKLV(0x01, v), header: 8))
+        return ZKCmd(name: "43 钥匙串状态", cmd: 0x43, hex: ZKProtocol.buildFrame(0x43, ZKProtocol.buildKLV(0x01, v), header: ProtocolRegistry.header(for: 0x43)))
     }
 
     // ---- 网关 (FE90 服务; 87 帧明文 KLV, needToken=false) ----
     static func cmd38GWStatus() -> ZKCmd {
-        ZKCmd(name: "38 网关状态", cmd: 0x38, hex: ZKProtocol.buildFrame(0x38, "", header: 8))
+        ZKCmd(name: "38 网关状态", cmd: 0x38, hex: ZKProtocol.buildFrame(0x38, "", header: ProtocolRegistry.header(for: 0x38)))
     }
     static func cmd31GWSetWifi(_ ssid: String, _ password: String, authMode: Int = 8, encryptType: Int = 0) -> ZKCmd {
         let klv = ZKProtocol.buildKLV(0x01, HexKit.utf8Hex(ssid))
@@ -295,10 +295,10 @@ enum ZKCmdBuilder {
             + ZKProtocol.buildKLV(0x03, HexKit.hexPair(UInt32(truncatingIfNeeded: authMode)))
             + ZKProtocol.buildKLV(0x04, HexKit.hexPair(UInt32(truncatingIfNeeded: encryptType)))
             + ZKProtocol.buildKLV(0x05, "00")
-        return ZKCmd(name: "31 网关配网", cmd: 0x31, hex: ZKProtocol.buildFrame(0x31, klv, header: 8))
+        return ZKCmd(name: "31 网关配网", cmd: 0x31, hex: ZKProtocol.buildFrame(0x31, klv, header: ProtocolRegistry.header(for: 0x31)))
     }
     static func cmd35GWReboot() -> ZKCmd {
-        ZKCmd(name: "35 网关重启", cmd: 0x35, hex: ZKProtocol.buildFrame(0x35, "", header: 8))
+        ZKCmd(name: "35 网关重启", cmd: 0x35, hex: ZKProtocol.buildFrame(0x35, "", header: ProtocolRegistry.header(for: 0x35)))
     }
 
     // 2026-10-27 审核补回（AUDIT-A F-37）：这两个命令在功能精简时被删，而 golden.json 里仍有向量 ——
@@ -310,7 +310,7 @@ enum ZKCmdBuilder {
     // 而 vendor 还有 36/37/39 等。缺的那些对应功能（云端绑定/固件推送）本仓不做，
     // 构造器补了也没人调。30/32 是 2026-10-27 补的（为了让 golden 对拍回到可用状态）。
     static func cmd30GWDeviceName() -> ZKCmd {
-        ZKCmd(name: "30 网关名称", cmd: 0x30, hex: ZKProtocol.buildFrame(0x30, "", header: 8))
+        ZKCmd(name: "30 网关名称", cmd: 0x30, hex: ZKProtocol.buildFrame(0x30, "", header: ProtocolRegistry.header(for: 0x30)))
     }
 
     /// cmd 32 GWSETIOT：#05=iotpKey #06=iotdSec #07=devAccToken
@@ -318,6 +318,6 @@ enum ZKCmdBuilder {
         let klv = ZKProtocol.buildKLV(0x05, iotpKeyHex)
             + ZKProtocol.buildKLV(0x06, iotdSecHex)
             + ZKProtocol.buildKLV(0x07, devAccTokenHex)
-        return ZKCmd(name: "32 网关 IoT", cmd: 0x32, hex: ZKProtocol.buildFrame(0x32, klv, header: 8))
+        return ZKCmd(name: "32 网关 IoT", cmd: 0x32, hex: ZKProtocol.buildFrame(0x32, klv, header: ProtocolRegistry.header(for: 0x32)))
     }
 }

@@ -96,7 +96,8 @@ extension DB {
 
     static func ledger(_ mac: String) -> Ledger {
         if DB.isDecoy { return Ledger() }
-        if let l = get(Ledger.self, "kf_ledger_" + mac) { return ledgerWithSecrets(mac, l) }
+        // 关键键读法（B1/B3）：主份解不出来时回落备份 —— 台账不该因为一次坏写就整本消失。
+        if let l = store.getCritical("kf_ledger_" + mac, Ledger.self) { return ledgerWithSecrets(mac, l) }
         // get 返回 nil 有两种语义: ①该键不存在 (真空台账) ②有键但解码抛错 (字段缺任一即整表抛)。
         // 旧实现在 ②下返回空 Ledger, 调用方 (addPwd/addFp/…) 紧接着 save → **台账被空表整表覆盖清空**。
         if store.has("kf_ledger_" + mac) { markLedgerCorrupt(mac) }
@@ -129,7 +130,8 @@ extension DB {
             let old = get(Ledger.self, "kf_ledger_" + mac)
             // SEC-01：明文口令先搬进 Keychain，plist 只落非密字段。
             // 写失败时 `ledgerForPlist` 会保留明文并记遥测 —— 宁可有明文，也不能丢口令。
-            set(ledgerForPlist(mac, l), "kf_ledger_" + mac)
+            // 关键键写法（B3）：写主份的同时把旧值挪到备份位。
+            store.setCritical("kf_ledger_" + mac, ledgerForPlist(mac, l))
             let changes = ledgerDiff(old, l)
             guard !changes.isEmpty else { return }
             let name = keychain(mac).map { LockArchive.displayName($0) } ?? mac

@@ -21,6 +21,8 @@ struct MobileKeysScreen: View {
     @State private var revokeTarget: MobileKey?
     /// 正在吊销的那把（按 id）。吊销是一次真实删除，等待期间不能让别的行再点。
     @State private var revoking: String?
+    /// iOS 26：交付弹层的过渡身份（它从「交给安卓」那个按钮身上长出来）。
+    @Namespace private var handoffNS
 
     private var keys: [MobileKey] { MobileKeyService.list(app.currentMac) }
     private var members: [MemberCard] { app.members.filter { !$0.archived } }
@@ -71,28 +73,28 @@ struct MobileKeysScreen: View {
                            subtitle: "生成一张只含 ekey 的二维码，不含母钥", chevron: true)
             }
             .buttonStyle(.plain)
+            // iOS 26：交付弹层从这一行「长」出来，而不是凭空出现。
+            .zoomTransitionSource(id: "handoff", namespace: handoffNS)
             .padding(.top, 10)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $sharing) { HandoffSheet() }
-        .confirmationDialog("吊销这把手机钥匙？", isPresented: confirmRevoke, titleVisibility: .visible) {
+        .sheet(isPresented: $sharing) {
+            HandoffSheet()
+                .zoomTransitionDestination(id: "handoff", namespace: handoffNS)
+        }
+        // iOS 27：直接以「要吊销的那把钥匙」为状态 —— 不再另配一个 Bool。
+        .itemConfirmationDialog("吊销这把手机钥匙？", item: $revokeTarget, titleVisibility: .visible) { key in
             Button("吊销", role: .destructive) {
-                guard let key = revokeTarget else { return }
                 revokeTarget = nil
                 Task { await revoke(key) }
             }
             Button("取消", role: .cancel) { revokeTarget = nil }
-        } message: {
+        } message: { _ in
             Text("锁端会删掉这枚 PIN，对方手机里的钥匙立即失效，且无法恢复 —— 只能重新签发、重新交付。")
         }
         .onAppear {
             if memberID == nil { memberID = members.first?.id }
         }
-    }
-
-    private var confirmRevoke: Binding<Bool> {
-        Binding(get: { revokeTarget != nil },
-                set: { if !$0 { revokeTarget = nil } })
     }
 
     private var issueCard: some View {
@@ -264,6 +266,16 @@ struct HandoffSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppModel.self) private var app
 
+    /// B36：交付的有效期（0 = 永久）。
+    @State private var days = 7
+    /// 这一份交付的记录（有效期、绑定号、一次性状态）。
+    @State private var record: HandoffRecord?
+    @State private var busy = false
+
+    private var expiryChoices: [(title: String, days: Int)] = [
+        ("1 天", 1), ("7 天", 7), ("30 天", 30), ("永久", 0)
+    ]
+
     private var payload: String? {
         // 空壳模式绝不给 ekey。
         //
@@ -272,7 +284,14 @@ struct HandoffSheet: View {
         // 在胁迫者面前扫一下这张码就能开门，那就不是伪装，是交出去了。
         guard !DB.isDecoy else { return nil }
         guard let kc = DB.keychainForUnlock(app.currentMac) else { return nil }
+        // 已经有交付记录 ⇒ 用带有效期与绑定号的载荷（B36）。
+        if let record { return HandoffService.payload(record) }
         return AndroidPair.payload(kc)
+    }
+
+    /// 以前的交付记录（本机这一把锁）。
+    private var records: [HandoffRecord] {
+        HandoffService.records().filter { $0.mac == app.currentMac }
     }
 
     // 原先这里有个 `blockedReason`，空壳时返回「空壳模式不提供交付码 —— 先退出空壳再来」。
@@ -296,6 +315,27 @@ struct HandoffSheet: View {
                 .lineSpacing(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
+
+            // B36：有效期可调 + 一次性交付。
+            if !DB.isDecoy {
+                HStack(spacing: 8) {
+                    ForEach(expiryChoices, id: \.days) { c in
+                        ChoiceChip(title: c.title, on: days == c.days, height: 34) {
+                            days = c.days
+                            record = nil
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 12)
+
+                Text("有效期到期后，这枚钥匙会在你下次打开 App 时被删掉。**没有服务器，也就没人能替你定时做这件事** —— 所以这一条要靠自己记得回来。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 8)
+            }
 
             Text("注意：它不是上面那把手机钥匙，而是本机钥匙串里的配对凭证 —— 扫完能开这把锁，但有效期与本机这把相同。")
                 .type(T.F.caption)
@@ -327,6 +367,40 @@ struct HandoffSheet: View {
                           detail: "先确认这把锁已经配对，并且钥匙串完整。")
             }
 
+            // B36：确认交付 = 一次性生效（真的把锁端那枚 PIN 删掉）。
+            if !DB.isDecoy, let record {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(HandoffService.summary(record))
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                    if !record.delivered {
+                        GhostButton(title: "已交给对方（一次性）", symbol: "checkmark.circle") {
+                            Task { await confirmDelivered(record) }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 14)
+            }
+
+            // 以前的交付记录 —— 每一条都能看出「那把钥匙现在还在不在」。
+            if !DB.isDecoy, !records.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("以前的交付")
+                        .type(T.F.kicker)
+                        .tracking(1.2)
+                        .foregroundStyle(T.C.ink3)
+                        .padding(.top, 16)
+                    ForEach(records.prefix(5)) { r in
+                        Text("\(r.memberName.isEmpty ? "门锁" : r.memberName) · \(HandoffService.summary(r))")
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.ink3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             Spacer()
             GhostButton(title: "关闭", symbol: nil) { dismiss() }
         }
@@ -334,6 +408,29 @@ struct HandoffSheet: View {
         .padding(.bottom, 24)
         .background(T.C.canvas)
         .presentationDetents([.large])
+        .onAppear {
+            guard !DB.isDecoy else { return }
+            guard record == nil else { return }
+            guard let kc = DB.keychainForUnlock(app.currentMac) else { return }
+            guard let ekey = AndroidPair.ekey(for: kc) else { return }
+            let pin = kc.pins.first ?? ""
+            let expires = days > 0 ? Date().timeIntervalSince1970 + Double(days) * 86400 : 0
+            record = HandoffService.create(mac: app.currentMac,
+                                           memberName: LockArchive.displayName(kc),
+                                           pin: pin, ekey: ekey,
+                                           expiresAt: expires)
+        }
+    }
+
+    /// 确认交付 ⇒ 锁端删掉那枚 PIN ⇒ 对方手机里的这把钥匙当场失效。
+    private func confirmDelivered(_ r: HandoffRecord) async {
+        busy = true
+        defer { busy = false }
+        let ok = await HandoffService.confirmDelivered(id: r.id)
+        record = HandoffService.records().first { $0.id == r.id }
+        AppToast.shared.show(ok
+            ? "已一次性交付 · 锁端那枚钥匙已删除"
+            : "没能删掉锁端那枚钥匙 · 打开 App 再试一次")
     }
 
     static func qr(_ text: String) -> UIImage? {

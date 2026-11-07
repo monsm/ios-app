@@ -9,6 +9,15 @@ struct ThresholdApp: App {
     @State private var settings = SettingsStore.shared
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        // F36/B44：启动的每一步都留个里程碑 —— 首屏慢了能说出慢在哪。
+        Startup.mark("App 初始化")
+        // B1：存储版本打戳（数据结构变了的话，版本号是唯一的「能不能读」判据）。
+        SchemaVersion.stamp()
+        // B67：上一次是不是异常退出（靠心跳标记判断）。
+        CrashLog.markLaunch()
+    }
+
     private var scheme: ColorScheme? {
         _ = settings.revision
         return settings.preferredScheme
@@ -30,10 +39,22 @@ struct ThresholdApp: App {
                 // 系统在进后台时会把「保持亮屏」复位，回前台补一次。
                 ScreenAwake.reapply()
                 AutoOpenController.shared.onForeground(mac: app.currentMac)
-                if app.unlocked { Task { await app.reload(refreshStatus: false) } }
+                Startup.mark("回前台")
+                if app.unlocked {
+                    Task {
+                        await app.reload(refreshStatus: false)
+                        // B39：后台排队的补读（更早的日志）趁现在跑掉。
+                        await LogSync.runPending()
+                        // B36：过期的一次性交付，趁有机会把锁端那枚 PIN 删掉。
+                        _ = await HandoffService.sweepExpired()
+                    }
+                }
             case .background:
                 AutoOpenController.shared.onBackground()
                 AppLock.shared.didEnterBackground()
+                // B45：进后台就停扫描 —— 蓝牙扫描是耗电大户，首页用不到它。
+                ScanPolicy.stopAll()
+                CrashLog.stage("后台")
             default:
                 break
             }
@@ -67,7 +88,11 @@ struct RootView: View {
         .task {
             app.attach(router: router)
             EngineHostRegistry.register(app)
+            Startup.mark("首屏就绪")
+            // B72：看门狗常驻 —— 卡住的命令要有人收尾。
+            Watchdog.start()
             if app.unlocked { await app.reload(refreshStatus: false) }
+            Startup.mark("首屏数据就绪")
         }
         .onChange(of: app.unlocked) { _, isOn in
             if isOn {
@@ -109,6 +134,9 @@ struct ShellView: View {
                 // I6：原生系统标签栏 —— 真 Liquid Glass 材质、滚动时自动收起
                 //（.tabBarMinimizeBehavior 只对系统栏生效，自绘胶囊吃不到）、
                 // VoiceOver 的「第 N 个标签」语义。设置在这里是真 Tab（第 4 个）。
+                //
+                // iPad 上同一套 Tab 会**自适应成侧边栏**（`.sidebarAdaptable`）——
+                // 宽屏就该给侧边栏，而不是把一个标签栏拉长。
                 TabView(selection: $bindable.tab) {
                     Tab(TabSlot.today.title, systemImage: "sun.max", value: .today) {
                         NavigationStack(path: $bindable.todayPath) {
@@ -131,7 +159,14 @@ struct ShellView: View {
                         }
                     }
                 }
-                .tabBarMinimizeBehavior(.onScrollDown)
+                .tabViewStyle(.sidebarAdaptable)
+                .minimizeTabBarOnScrollDown()
+                // 宽屏（iPad）上标签会自适应成侧边栏 —— 侧边栏顶部空着很浪费，
+                // 这里放「这个家叫什么」与当前锁，让侧边栏一眼说明「这是哪一家、哪把锁」。
+                // `tabViewSidebarHeader` 是 iOS 18+ 的能力（部署目标 25，无需分支）。
+                .tabViewSidebarHeader {
+                    SidebarHeader()
+                }
                 .tint(T.C.brass)
             } else {
                 // 浮岛玻璃胶囊（默认）：内容滚到栏底下，第 4 个按钮拉起设置 sheet。
@@ -200,5 +235,39 @@ extension View {
     @MainActor
     func withDestinations() -> some View {
         navigationDestination(for: Dest.self) { Destinations.view(for: $0) }
+    }
+}
+
+// MARK: - 侧边栏头（宽屏）
+
+/// iPad 侧边栏的头：家名 + 当前锁。
+///
+/// 它只在**侧边栏形态**下可见（`sidebarAdaptable`），窄屏上不占任何位置。
+@MainActor
+struct SidebarHeader: View {
+    @Environment(AppModel.self) private var app
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(SettingsStore.shared.homeName)
+                .type(T.F.title2)
+                .foregroundStyle(T.C.ink)
+                .lineLimit(1)
+            HStack(spacing: 6) {
+                Image(systemName: "lock")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(T.C.brass)
+                    .accessibilityHidden(true)
+                Text(app.lock?.name ?? "还没有门锁")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 6)
+        .padding(.bottom, 6)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(SettingsStore.shared.homeName)，当前门锁 \(app.lock?.name ?? "未绑定")")
     }
 }

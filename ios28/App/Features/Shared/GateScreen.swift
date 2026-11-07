@@ -114,7 +114,7 @@ struct GateScreen: View {
     private var keypad: some View {
         // 同一组里相邻的玻璃要放进容器，系统才会把它们当成一片连续材质
         // 计算折射与高光；否则 12 个键各折各的，接缝会花。
-        GlassEffectContainer(spacing: 12) {
+        GlassGroup(spacing: 12) {
             VStack(spacing: 12) {
                 ForEach(keys.indices, id: \.self) { row in
                     HStack(spacing: 12) {

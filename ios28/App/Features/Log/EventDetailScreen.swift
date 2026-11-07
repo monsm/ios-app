@@ -15,7 +15,7 @@ struct EventDetailScreen: View {
     /// 顺带记下每条记录**当前**的备注：投影里的 `event.note` 是重载那一刻的快照，
     /// 用户刚敲的字不在里面；切走再切回来时若照投影重载，键盘上刚敲的字就消失了。
     @State private var notes: [String: String] = [:]
-    @State private var claiming = false
+    @State private var claiming: Bool? = nil
 
     /// 可被认领的成员：归档的不算（人已不在名单里，认给 TA 等于把归属挂到空处）。
     private var claimableMembers: [MemberCard] {
@@ -36,7 +36,7 @@ struct EventDetailScreen: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog("把这条记录认给谁？", isPresented: $claiming, titleVisibility: .visible) {
+        .itemConfirmationDialog("把这条记录认给谁？", item: $claiming, titleVisibility: .visible) { _ in
             ForEach(claimableMembers) { m in
                 Button(m.name) {
                     if let event { claim(event, to: m) }

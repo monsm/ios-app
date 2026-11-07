@@ -39,6 +39,20 @@ final class AppModel {
     var lastError: String?
     var overrideMac: String?
     var readLogsAt: Int64?
+    /// 读日志的实时进度（F42/F45）。nil = 没在读。
+    var logProgress: TaskProgress?
+    /// 首屏还在读（骨架屏用，F32）。
+    var isLoading: Bool = false
+    /// 当前读日志的任务句柄 —— 取消长任务用（F42）。
+    @ObservationIgnored private var logTask: Task<Void, Never>?
+    /// 上一次开锁失败的**结构化**描述（F15 诊断卡用）。nil = 没失败过。
+    var lastUnlockFailure: ScreenFailure?
+    /// 上一次开锁用的是哪一类凭证（F16 回执卡用）。
+    var lastUnlockCredential: String = ""
+    /// 上一次动作**部分成功**时的说明（F43）。nil = 没有部分成功。
+    /// 「新码写进去了、旧码没删掉」这种事不能混进「成功」里 ——
+    /// 用户会以为整件事都成了，于是旧的那枚密码继续有效。
+    var lastPartial: ScreenFailure?
 
     /// 最近一次「从门锁读日志」的分页读数 —— **只读展示**，不参与任何逻辑（诊断页用）。
     /// 真机审计（2026-11-07）：锁端日志约 2000 条滚存，单次读取的 20 页上限
@@ -60,6 +74,8 @@ final class AppModel {
     /// 自动上锁倒计时的代次，防止被取消的旧任务覆写新任务的状态。
     @ObservationIgnored private var autoLockGen = 0
     @ObservationIgnored private var activitySignature = ""
+    /// 上一次载入的是哪把锁 —— 换锁时据此清缓存（B46）。
+    @ObservationIgnored private var loadedMac = ""
     /// 活跃度缓存的**结果**。只留签名不留结果，缓存等于没做 ——
     /// 同一次刷新里第二次取成员卡片时拿到的是空 bundle，名册永远显示「还没开过门」。
     @ObservationIgnored private var activityCache: MemberHub.ActivityBundle?
@@ -84,6 +100,8 @@ final class AppModel {
     // MARK: - 载入
 
     func reload(refreshStatus: Bool = false) async {
+        // 骨架屏只在**首屏**出现（F32）：之后的刷新不该把整页换成骨架。
+        if !isLoading { isLoading = true }
         let mac = currentMac
         // 空壳标志必须**先**立起来，再去读任何数据 ——
         // 引擎层的 keychains()/ledger()/readLogs() 都靠这个标志返回空集；
@@ -97,6 +115,7 @@ final class AppModel {
             events = []
             members = reloadMemberCards()
             lastStatus = nil
+            isLoading = false
             return
         }
 
@@ -111,6 +130,12 @@ final class AppModel {
         }
 
         lock = makeLock(kc)
+        isLoading = false
+        // B46：换了一把锁 ⇒ 上一把锁的读数/活跃度/信号历史全部作废。
+        if loadedMac != mac {
+            loadedMac = mac
+            CachePolicy.apply(.lockSwitched, mac: mac)
+        }
         // 空壳里 `locks` 只留当前这一把：设置页的「N 把锁」要与今日页看得见的那把一致。
         // 真实锁清单（哪怕只有一把）属于被隐藏的信息；`lock` 本身按设计保留，门照样能开。
         if DB.isDecoy {
@@ -233,15 +258,16 @@ final class AppModel {
         // 成员卡片反过来要靠记录算活跃度，两边互相依赖会绕成环。
         var names: [String: String] = [:]
         for member in DB.members() { names[member.id] = member.name }
-        events = RecordsSource.load(mac: m, lockName: name, memberNames: names)
+        // B43：内存里的事件投影有上限 —— 锁端能存两千条，全摆进内存会拖垮滚动。
+        // 盘上仍是全量（搜索与洞察不受影响），这里只是**不进内存**。
+        events = MemoryCap.trim(RecordsSource.load(mac: m, lockName: name, memberNames: names))
     }
 
-    /// 成员卡片。活跃度（最近一次开门）来自 `MemberHub.activityBundle`，
-    /// 那是个 O(锁 × 日志) 的重活，所以按签名缓存。
+    /// 成员卡片。活跃度（最近一次开门）来自 `StatsWorker`（B41）。
     ///
-    /// 缓存的**结果**必须留着：原实现只在签名变化时重算，却把结果丢在局部变量里，
-    /// 于是同一轮刷新里第二次调用拿到的是空 bundle ——
-    /// 名册每一行的「最近 \(When.ago(...))」永远是「还没开过门」。
+    /// 活跃度是 O(锁 × 日志) 的重活 —— 现在它跑在 **actor** 里，主线程只拿结果。
+    /// 刚进页面时结果还没回来，这一版会先给「还没有记录」的空卡片，
+    /// 结果回来后再刷一次 —— 宁可晚一拍，不要卡住首屏。
     private func reloadMemberCards() -> [MemberCard] {
         let ext = MemberHub.allExt()
         let raw = DB.members()
@@ -250,9 +276,12 @@ final class AppModel {
         // 旧的「最近 N 天前」。把首尾时间也纳入签名。
         let signature = raw.map(\.id).joined(separator: "|")
             + "#\(events.count)#\(events.first?.time ?? 0)#\(events.last?.time ?? 0)"
+            + "#\(MemberActivityCache.generation)"
         if signature != activitySignature {
             activitySignature = signature
-            activityCache = MemberHub.activityBundle(raw.map(\.id))
+            activityCache = nil
+            // B41：重算挪进 actor，主线程不阻塞。
+            refreshActivity(ids: raw.map(\.id), signature: signature)
         }
         let activity = activityCache ?? MemberHub.ActivityBundle()
         return raw.map { m in
@@ -273,6 +302,18 @@ final class AppModel {
                 archived: e.archived,
                 note: e.note
             )
+        }
+    }
+
+    /// 在 actor 里重算活跃度，回来后刷新成员卡片（B41）。
+    private func refreshActivity(ids: [String], signature: String) {
+        let generation = MemberActivityCache.generation
+        Task { @MainActor in
+            let bundle = await StatsWorker.shared.activity(ids: ids, signature: signature)
+            // 期间缓存被作废（换锁 / 恢复备份）⇒ 这一份结果已经过期，丢掉。
+            guard MemberActivityCache.generation == generation else { return }
+            activityCache = bundle
+            members = reloadMemberCards()
         }
     }
 
@@ -439,6 +480,8 @@ final class AppModel {
                 guard attempt < attempts else {
                     phase = .failed("连不上门锁：\(msg)")
                     lastError = msg
+                    lastUnlockFailure = ErrorCopy.failure(error)
+                    LinkQuality.noteFailure(mac, msg)
                     Haptics.notify(.error)
                     return
                 }
@@ -458,6 +501,9 @@ final class AppModel {
                 let rc = try await LockService.shared.unlock(mac: mac, pinDec: chosenPin(mac))
                 if rc == 0 {
                     phase = .opened
+                    lastUnlockFailure = nil
+                    LinkQuality.noteConnect(mac)
+                    lastUnlockCredential = chosenPin(mac) == nil ? "本机钥匙里的一枚" : "你选的那枚凭证"
                     Haptics.notify(.success)
                     let now = Int64(Date().timeIntervalSince1970 * 1000)
                     lastUnlockAt = now
@@ -478,9 +524,11 @@ final class AppModel {
                     await reload(refreshStatus: false)
                 } else if rc == 22 {
                     phase = .failed("门锁要求第二种验证方式")
+                    lastUnlockFailure = ErrorCopy.failure(rc: rc)
                     Haptics.notify(.error)
                 } else {
                     phase = .failed(StatusParser.rcFriendly(rc))
+                    lastUnlockFailure = ErrorCopy.failure(rc: rc)
                     Haptics.notify(.error)
                 }
             } catch {
@@ -488,6 +536,8 @@ final class AppModel {
                 let msg = DB.isDecoy ? "没能打开门锁，请再试一次。" : raw
                 phase = .failed(msg)
                 lastError = msg
+                // 结构化失败（F15）：诊断卡要靠它分清「连不上」与「凭证被拒」。
+                lastUnlockFailure = ErrorCopy.failure(error, cmd: 0x04)
                 Haptics.notify(.error)
             }
             return
@@ -551,9 +601,19 @@ final class AppModel {
         guard !DB.isDecoy else { return }
         lastError = nil
         do {
-            let st = try await LockService.shared.getStatus(mac: mac)
+            // B20：同一把锁的并发状态读取**合并成一次** —— BLE 链路一次只挂得下一个
+            // waiter，两次并发读必然有一个超时（用户连点两次「刷新」就是这种情况）。
+            let stOpt: LockStatus? = await RequestCoalescer.shared.run("status:" + mac) {
+                try? await LockService.shared.getStatus(mac: mac)
+            }
+            guard let st = stOpt else {
+                // 合并器里读失败 = 真的读失败（错误在合并前就抛了）。
+                throw BLEErrorX.msg("没读到门锁状态")
+            }
             DB.writeStatus(mac, st)
             sampleRSSI()
+            // B74：每次读到锁钟都记一次偏差 —— 漂移是趋势，要靠多次采样才看得出来。
+            ClockDrift.note(mac: mac)
             await reload(refreshStatus: false)
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -590,73 +650,67 @@ final class AppModel {
         busy = "正在读门锁记录…"
         defer { busy = nil }
         lastError = nil
+        // 进度（F42/F45）：显示「第 N/20 页、已读 M 条」——
+        // 没有它，一次 20 页的读取在界面上就是「卡住了十几秒」。
+        logProgress = TaskProgress(title: "正在读门锁记录",
+                                   detail: "第 1 / \(LogSync.maxPages) 页",
+                                   total: LogSync.maxPages,
+                                   fraction: 0)
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             sampleRSSI()
-            // 断点续读（真机审计 2026-11-07）：锁端日志约 2000 条滚存，单轮最多 20 页。
-            // 有锚点（上次撞上限留下的「已覆盖最低序号 − 1」）就从锚点继续往更早翻；
-            // 没有（首次 / 已读完）才从最新开始。
-            var startIdx: UInt32 = RecordsSource.logCursor(mac: mac) ?? 0xFFFF_FFFF
-            var collected: [LogEntry] = []
-            var surplus: Int?
-            var pages = 0
-            do {
-                for _ in 0 ..< 20 {
-                    let page = try await LockService.shared.getLogs(startIdx: startIdx, pageSize: 5)
-                    pages += 1
-                    if let s = page.surplus { surplus = s }
-                    if page.logs.isEmpty { break }
-                    collected.append(contentsOf: page.logs)
-                    if let s = page.surplus, s <= 0 { break }
-                    if page.logs.count < 5 { break }
-                    guard let low = page.logs.map(\.idxRaw).min(), low > 0 else { break }
-                    startIdx = low - 1
+            // 断点续读 + 自适应分页 + 后台补读都在 LogSync 里（B39/B42）。
+            // 放进子 Task：这样「取消」能真的打断它，而不是只把进度条藏起来。
+            let task = Task { await LogSync.sync(mac: mac) { p in
+                Task { @MainActor in
+                    self.logProgress?.step("第 \(p.page) / \(p.pages) 页 · 已读 \(p.read) 条",
+                                           step: p.page,
+                                           fraction: Double(p.page) / Double(max(p.pages, 1)))
                 }
-            } catch {
-                // 真机断链是常态（审计实测 16 页里断 4 次）—— 已读到的先落盘 + 留锚点，
-                // 下一次点击从断点继续，而不是整轮白读（旧写法在这里把 collected 整个丢掉）。
-                guard !collected.isEmpty else { throw error }
-                DB.writeLogs(mac, collected)   // writeLogs 内部按 idxRaw 与缓存合并去重
-                let low = collected.map(\.idxRaw).min()
-                if let l = low, l > 0 {
-                    RecordsSource.setLogCursor(mac: mac, l - 1)
-                }
-                lastLogRead = LogReadStats(
-                    pages: pages, read: collected.count, remaining: nil, capped: true,
-                    lowest: low, done: false,
-                    at: Int64(Date().timeIntervalSince1970 * 1000))
-                await reload(refreshStatus: false)
-                lastError = ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
-                    + "（已保存本次读到的 \(collected.count) 条；再点一次会从断点继续）"
-                return (read: collected.count, remaining: nil)
-            }
-            let capped = pages >= 20 && (surplus ?? 0) > 0
-            let remaining = capped ? surplus : nil
-            let lowest = collected.map(\.idxRaw).min()
-            // 锚点：下次从「本轮已覆盖最低序号 − 1」继续；读完了把锚点收掉。
-            if capped, let low = lowest, low > 0 {
-                RecordsSource.setLogCursor(mac: mac, low - 1)
-            } else {
-                RecordsSource.setLogCursor(mac: mac, nil)
-            }
+            } }
+            logTask = task
+            let result = await task.value
+            logTask = nil
+            logProgress = nil
+
+            let capped = result.capped
+            let remaining = result.remaining
+            let lowest = result.lowest
             // 只读读数（诊断页展示用）：分页统计在这里落一笔，不参与上面的任何判停逻辑。
             lastLogRead = LogReadStats(
-                pages: pages,
-                read: collected.count,
+                pages: result.pages,
+                read: result.read,
                 remaining: remaining,
                 capped: capped,
                 lowest: lowest,
-                done: !capped,
+                done: result.done,
                 at: Int64(Date().timeIntervalSince1970 * 1000))
-            DB.writeLogs(mac, collected)   // writeLogs 内部按 idxRaw 与缓存合并去重
-            RecordsSource.markSynced(mac: mac, at: Int64(Date().timeIntervalSince1970 * 1000))
-            readLogsAt = RecordsSource.lastSync(mac: mac)
             await reload(refreshStatus: false)
-            return (read: collected.count, remaining: remaining)
+
+            if result.interrupted {
+                // 部分成功（F43）：读到的已经落盘并留了锚点，下一轮从断点继续。
+                let why = result.message ?? "连接中断"
+                lastError = "\(why)（已保存本次读到的 \(result.read) 条；再读一次会从断点继续）"
+                return (read: result.read, remaining: remaining)
+            }
+            // 撞上限 ⇒ 排一轮后台补读（B39）：连着的时候自动往更早翻，
+            // 不必等用户再点一次。
+            if capped { LogSync.scheduleBackground(mac) }
+            return (read: result.read, remaining: remaining)
         } catch {
+            logProgress = nil
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             return nil
         }
+    }
+
+    /// 取消正在进行的读日志（F42）。已读到的部分仍然落盘 —— 下次从断点继续。
+    func cancelLogRead() {
+        logTask?.cancel()
+        logTask = nil
+        logProgress = nil
+        busy = nil
+        lastError = "已取消读取。已读到的部分保留，下次从断点继续。"
     }
 
     // MARK: - 凭证写入
@@ -698,6 +752,11 @@ final class AppModel {
                     ledger.pwds.removeAll { $0.alias == alias }
                 } catch {
                     lastError = "新码已写入，但旧码（#\(alias)）没能删除。"
+                    lastPartial = ScreenFailure(kind: .lockRejected,
+                                               title: "旧码（#\(alias)）没能删除",
+                                               detail: "新码已经写进门锁了，但旧的那一枚还在锁里。",
+                                               next: "到凭证页把旧的那一枚删掉，否则它还能开门。",
+                                               canRetry: true)
                 }
             }
             DB.saveLedger(mac, ledger)
@@ -931,6 +990,17 @@ final class AppModel {
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             try await LockService.shared.setZotp(on)
+            // B14：写后回读。rc=0 只证明命令被接收 ——
+            // 固件不认这条命令时，界面上的开关会停在「已打开」，而锁其实没开。
+            // 状态帧里的 tempPwdMode 是动态密码的开关位，拿它对账。
+            let st = try await LockService.shared.getStatus(mac: mac)
+            DB.writeStatus(mac, st)
+            let actual = st.tempPwdMode != 0
+            guard actual == on else {
+                return .failure(BLEErrorX.msg(on
+                    ? "门锁回了成功，但动态密码没有开。这把锁的固件可能不支持。"
+                    : "门锁回了成功，但动态密码还开着。"))
+            }
             await reload(refreshStatus: false)
             return .success(())
         } catch {

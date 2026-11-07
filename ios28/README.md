@@ -55,6 +55,8 @@ xcodebuild build -project Threshold.xcodeproj -scheme Threshold \
 | [docs/BACKEND.md](docs/BACKEND.md) | **后台实际功能点**：协议事实、43 项能力、数据存在哪、安全边界 |
 | [docs/DESIGN.md](docs/DESIGN.md) | DAYLIGHT 设计语言：概念、令牌、组件、信息架构、页面清单 |
 | [docs/ENGINE-PORT.md](docs/ENGINE-PORT.md) | Engine 移植记录：照搬了什么、改了哪几处、为什么 |
+| [docs/IOS26-27-UPGRADE.md](docs/IOS26-27-UPGRADE.md) | **iOS 26 / iOS 27 能力接入报告**：接了什么、落在哪、没接的为什么 |
+| [docs/IDEAS.md](docs/IDEAS.md) | 功能点子清单与逐条决策（做 58 / 不做 88） |
 
 ---
 
@@ -86,6 +88,7 @@ ios28/
 | `lineage` | 与上一版 V7/V8 设计系统彻底切割（旧符号零残留） |
 | `destmap` | `Dest` 台账 ↔ 实现一一对应 |
 | `contrast` | 明暗两套文字色 + 实底前景色的 WCAG 对比度 |
+| `l10n` | 文案 key 完整性（用了表里没有的 key 即失败） |
 
 ---
 
@@ -93,13 +96,28 @@ ios28/
 
 | 项 | 状态 |
 |---|---|
-| 静态闸门 | ✅ 全绿（6 道） |
+| 静态闸门 | ✅ 全绿（7 道） |
 | 视觉验收台 | ✅ 7 屏 × 明暗两套已渲染 |
 | 真编译 | ✅ 通过（CI run 42236340048 · 提交 `2a4d6b3`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
 | 真机手感 | ❌ 未验（镜头按压、触觉、真实材质折射） |
 | 动态字体极端值 | ⚠️ 已按令牌缩放，AX5 仍要看真机 |
-| 横屏 / iPad | ❌ 只支持竖屏 iPhone |
+| 横屏 / iPad | ⚠️ iPad 与横屏**已支持**（两栏版式 + 系统侧边栏），但**未在真机/iPad 上验过** |
 | 单元测试 | ❌ 本版没有（`Tests/` 空）。上一版的 8 个测试文件没有随界面重写一起搬过来 —— `xcodebuild test` 在这台自托管 runner 上**永远跑不完**（见 `ios27.yml` 的说明），硬接进 CI 会堵死整条队列 |
 
 **这份 README 不会用"已完成"掩盖上面几项没做到的验证。**
+
+---
+
+## 系统版本
+
+| 项 | 值 |
+|---|---|
+| 最低部署版本 | **iOS 25.0** |
+| 编译 SDK | iOS 27（Xcode 27） |
+| iOS 26+ | 原生 Liquid Glass（`glassEffect` / 玻璃按钮 / 可变形玻璃 / 滚动边缘柔化 / 背景延展 / 导航过渡） |
+| iOS 27+ | 容器里的轻扫操作、基于数据的弹窗、工具栏溢出菜单与钉位、宽屏侧边栏 |
+| iOS 25 | **材质等价降级**（系统材质顶替玻璃），功能与命中区完全一致 |
+
+每一项新能力的落点与降级路径见 **[docs/IOS26-27-UPGRADE.md](docs/IOS26-27-UPGRADE.md)**，
+没接进去的项与原因也写在那里。
 

@@ -11,7 +11,7 @@ struct MemberDetailScreen: View {
     @State private var note = ""
     @State private var groupTag = ""
     @State private var archived = false
-    @State private var confirmingDelete = false
+    @State private var confirmingDelete: Bool? = nil
     @State private var loaded = false
 
     private var member: MemberCard? {
@@ -39,10 +39,10 @@ struct MemberDetailScreen: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog("删除这位成员？", isPresented: $confirmingDelete, titleVisibility: .visible) {
+        .itemConfirmationDialog("删除这位成员？", item: $confirmingDelete, titleVisibility: .visible) { _ in
             Button("删除", role: .destructive) { remove() }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("名下的凭证会变成「未归属」，锁端不会被删除。")
         }
         // 档案里的角色 / 分组 / 备注 / 归档状态要先灌进表单。

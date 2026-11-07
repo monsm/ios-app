@@ -26,6 +26,10 @@ struct PairingScreen: View {
     @State private var place = ""
     @State private var probing: String?
     @State private var probeText: [String: String] = [:]
+    /// F17：配对向导的结构化进度（引擎给的是「步骤 N/7: …」，这里解成可渲染的进度）。
+    @State private var pairProgress: TaskProgress?
+    /// F17：失败的结构化描述（给 FailureCard 用）。
+    @State private var pairFailure: ScreenFailure?
 
     var body: some View {
         ScreenScroll {
@@ -72,39 +76,57 @@ struct PairingScreen: View {
                 }
                 .padding(.top, 24)
             } else {
+                // F17：配对前检查清单。先把这几件事说清楚，再去搜 ——
+                // 「搜不到锁」十有八九是其中一条没做到。
+                preflightSection
+
                 PrimaryButton(title: scanning ? "正在搜索…" : "开始搜索", busy: scanning) {
                     Task { await scan() }
                 }
                 .padding(.top, 22)
 
                 if pairing != nil {
-                    GlassSurface() {
-                        HStack(spacing: 12) {
-                            ProgressView().tint(T.C.brass)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("正在配对")
-                                    .type(T.F.callout)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(T.C.ink)
-                                Text(progress.isEmpty ? "正在握手…" : progress)
-                                    .type(T.F.caption)
-                                    .foregroundStyle(T.C.ink3)
-                                    .lineLimit(3)
-                            }
+                    // F17/F42：进度用统一的进度条 —— 引擎给的是「步骤 N/7: …」，
+                    // 这里解成「第 N 步 / 共 7 步」+ 这一步在做什么。
+                    if let pairProgress {
+                        ProgressMeter(progress: pairProgress) {
+                            pairTask?.cancel()
+                            rollback("已中止：配网没有跑完，锁未被改动。")
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 16)
+                    } else {
+                        GlassSurface() {
+                            HStack(spacing: 12) {
+                                ProgressView().tint(T.C.brass)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("正在配对")
+                                        .type(T.F.callout)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(T.C.ink)
+                                    Text(progress.isEmpty ? "正在握手…" : progress)
+                                        .type(T.F.caption)
+                                        .foregroundStyle(T.C.ink3)
+                                        .lineLimit(3)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.top, 16)
                     }
-                    .padding(.top, 16)
                     // E7：中止并回滚 —— 配网不是非跑完不可。cancel 之后锁侧要么没写、
                     // 要么停在可重来的重置态；本机则断开链路、退回发现列表。
-                    GhostButton(title: "中止并回滚", symbol: "xmark.circle") {
+                    GhostButton(title: L("pair.wizard.rollback"), symbol: "xmark.circle") {
                         pairTask?.cancel()
                         rollback("已中止：链路已断开，锁没有被改一半就留着。")
                     }
                     .padding(.top, 10)
                 }
 
-                if let errorLine {
+                // F17：失败走统一的失败卡（有分类、有下一步），不再是一行红字。
+                if let pairFailure {
+                    FailureCard(failure: pairFailure)
+                        .padding(.top, 14)
+                } else if let errorLine {
                     Text(errorLine)
                         .type(T.F.caption)
                         .foregroundStyle(T.C.danger)
@@ -147,6 +169,56 @@ struct PairingScreen: View {
                 progress = ""
             }
         }
+    }
+
+    /// F17：配对前的检查清单。
+    ///
+    /// 每一条都给出**现在能不能确认**：
+    ///  · 蓝牙 —— 系统状态，直接读；
+    ///  · 门锁通电 / 恢复配网态 —— 只能靠「搜得到它」来间接确认，
+    ///    所以搜到之前这两条永远是「待确认」，不假装已完成。
+    private var preflightSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHead(index: "00", title: "配对前先确认")
+            VStack(alignment: .leading, spacing: T.S.s) {
+                checkRow(symbol: "dot.radiowaves.left.and.right",
+                         title: "蓝牙已开启",
+                         detail: BLEService.shared.isPoweredOn ? "已开启" : "没有蓝牙就搜不到锁",
+                         ok: BLEService.shared.isPoweredOn)
+                checkRow(symbol: "bolt.fill",
+                         title: "门锁已通电",
+                         detail: "门锁背面有电（一般就是电池仓）",
+                         ok: nil)
+                checkRow(symbol: "arrow.triangle.2.circlepath",
+                         title: "门锁已恢复到配网状态",
+                         detail: "在门锁键盘上按住重置键几秒，听到提示音",
+                         ok: nil)
+                checkRow(symbol: "figure.walk.arrival",
+                         title: "手机就在门锁旁边",
+                         detail: "1 米以内最稳",
+                         ok: devices.isEmpty ? nil : true)
+            }
+            .padding(.vertical, T.S.s)
+        }
+    }
+
+    private func checkRow(symbol: String, title: String, detail: String, ok: Bool?) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: ok == true ? "checkmark.circle" : (ok == false ? "xmark.circle" : "circle.dashed"))
+                .font(.system(size: 14, weight: .regular))
+                .foregroundStyle(ok == true ? T.C.ok : (ok == false ? T.C.danger : T.C.ink4))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .type(T.F.footnote)
+                    .fontWeight(.medium)
+                    .foregroundStyle(T.C.ink)
+                Text(detail)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func deviceRow(_ device: BLEAdvDevice) -> some View {
@@ -197,6 +269,9 @@ struct PairingScreen: View {
         scanning = true
         errorLine = nil
         devices = []
+        // B45：这次扫描有理由（配对），离开页面时会释放。
+        ScanPolicy.acquire("pairing")
+        defer { ScanPolicy.release("pairing") }
         do {
             try await BLEService.shared.startScan(allowDuplicates: false, timeoutMs: 8000)
             let deadline = Date().addingTimeInterval(8)
@@ -233,10 +308,15 @@ struct PairingScreen: View {
         pairTask = Task {
             do {
                 let kc = try await LockService.shared.pair(deviceId: device.deviceId, mac: mac) { line in
-                    Task { @MainActor in progress = cleanStep(line) }
+                    Task { @MainActor in
+                        progress = cleanStep(line)
+                        // F17：把引擎的「步骤 N/7: …」解成结构化进度。
+                        if let p = PairingScreen.progress(from: line) { pairProgress = p }
+                    }
                 }
                 if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
                 pairing = nil
+                pairProgress = nil
                 pairedMac = mac
                 // 命名预填型号：pidName 缺省时退到产品名。
                 nickname = kc.pidName.isEmpty ? PidMap.productName(kc.pid) : kc.pidName
@@ -244,9 +324,37 @@ struct PairingScreen: View {
                 naming = true
             } catch {
                 if Task.isCancelled { rollback("已中止：配网没有跑完，锁未被改动。"); return }
+                pairFailure = ErrorCopy.failure(error)
                 rollback((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
             }
         }
+    }
+
+    /// 把引擎的进度行解成结构化进度。
+    ///
+    /// 引擎给的是「步骤 3/7: cmd 05 交换密钥 （先建通讯会话）」——
+    /// 命令号对用户没有意义，这里只留「第几步」与「在做什么」。
+    static func progress(from line: String) -> TaskProgress? {
+        guard let r = line.range(of: #"步骤\s*(\d+)\s*/\s*(\d+)\s*[:：]\s*(.+)"#,
+                                 options: .regularExpression) else { return nil }
+        let parts = line[r].split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return nil }
+        let head = String(parts[0])
+        var detail = String(parts[1])
+        // 去掉命令号（cmd 05 之类），留着纯人话。
+        detail = detail.replacingOccurrences(of: #"cmd\s*[0-9A-Fa-f]+"#,
+                                             with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+        let nums = head.split(whereSeparator: { $0 == "/" || $0 == " " || $0 == ":" })
+            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        let step = nums.first ?? 0
+        let total = nums.count > 1 ? (nums[1] == 0 ? 7 : nums[1]) : 7
+        return TaskProgress(title: "第 \(step) 步 / 共 \(total) 步",
+                            detail: detail,
+                            step: step,
+                            total: total,
+                            cancellable: true,
+                            fraction: total > 0 ? Double(step) / Double(total) : nil)
     }
 
     /// E7：中止/失败后的回滚。文案说「链路已断开」就必须真的断开 ——
@@ -257,6 +365,7 @@ struct PairingScreen: View {
         LockService.shared.disconnect()
         pairing = nil
         progress = ""
+        pairProgress = nil
         naming = false
         pairedMac = ""
         errorLine = reason
@@ -341,6 +450,8 @@ struct AutoOpenScreen: View {
     @State private var lastReason: String?
     @State private var calibrating = false
     @State private var calMessage: String?
+    /// B21：标定 2.0 的采样点（近/远）。
+    @State private var calSamples: [AutoOpenCalibration.Sample] = []
 
     var body: some View {
         ScreenScroll {
@@ -406,7 +517,51 @@ struct AutoOpenScreen: View {
                     .padding(.top, 8)
             }
 
-            SectionHead(index: "03", title: "上次为什么没开")
+            // B21：标定 2.0 —— 近处与远处**都要采**。
+            //
+            // 原来只采一处、取 P95：那样阈值是猜的（不知道「远」到底是多远）。
+            // 现在两边都采，阈值取两者之间；再加上曲线，让用户看得见信号怎么变。
+            SectionHead(index: "03", title: "标定曲线")
+            Text("站在门口采「近」，走开两三米采「远」。两处都采过，阈值才算数。")
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .lineSpacing(3)
+                .padding(.top, 4)
+
+            if !calSamples.isEmpty {
+                HStack(alignment: .bottom, spacing: 3) {
+                    ForEach(calSamples) { s in
+                        VStack(spacing: 2) {
+                            Rectangle()
+                                .fill(s.phase == .near ? T.C.brass : T.C.ink4)
+                                .frame(height: CGFloat(max(6, min(48, (s.rssi + 100) * 0.7))))
+                            Text(s.phase == .near ? "近" : "远")
+                                .type(T.F.caption)
+                                .foregroundStyle(T.C.ink3)
+                        }
+                    }
+                }
+                .frame(height: 60, alignment: .bottom)
+                .padding(.top, 10)
+            }
+
+            HStack(spacing: 10) {
+                GhostButton(title: "采一个近点", symbol: "figure.walk.arrival") {
+                    recordCalibration(.near)
+                }
+                GhostButton(title: "采一个远点", symbol: "figure.walk.departure") {
+                    recordCalibration(.far)
+                }
+            }
+            .padding(.top, 12)
+
+            Text(AutoOpenCalibration.summary(mac: app.currentMac))
+                .type(T.F.caption)
+                .foregroundStyle(T.C.ink3)
+                .padding(.top, 8)
+                .fixedSize(horizontal: false, vertical: true)
+
+            SectionHead(index: "04", title: "上次为什么没开")
             if let lastReason, !lastReason.isEmpty {
                 Text(lastReason)
                     .type(T.F.callout)
@@ -437,6 +592,7 @@ struct AutoOpenScreen: View {
         .onAppear {
             base = AutoOpenKit.rssiBase(mac: app.currentMac)
             lastReason = AutoOpen.lastReject(app.currentMac)?.reason
+            calSamples = AutoOpenCalibration.plan(mac: app.currentMac).samples
         }
     }
 
@@ -445,6 +601,27 @@ struct AutoOpenScreen: View {
     private var calText: String {
         guard let cal = AutoOpen.autocal(app.currentMac) else { return "未标定" }
         return "已标定 · " + When.ago(Int64(cal.at * 1000))
+    }
+
+    /// 采一个标定点（B21）。读一次当前信号，记进档案。
+    private func recordCalibration(_ phase: AutoOpenCalibration.Phase) {
+        guard !DB.isDecoy else {
+            calMessage = "当前无法读取，请稍后再试。"
+            return
+        }
+        LinkSenseModel.shared.readRSSI { value in
+            Task { @MainActor in
+                guard let value else {
+                    calMessage = "没读到信号 —— 再靠近一点试一次。"
+                    return
+                }
+                let plan = AutoOpenCalibration.record(mac: app.currentMac, phase: phase, rssi: value)
+                calSamples = plan.samples
+                calMessage = "采到 \(value) dBm · \(phase == .near ? "近点" : "远点")"
+                // 标定变了 ⇒ 底噪基线也要跟着换，否则触发档位还用着旧的。
+                base = AutoOpenKit.rssiBase(mac: app.currentMac)
+            }
+        }
     }
 
     private func calibrate() async {
@@ -630,21 +807,18 @@ struct HardwareScreen: View {
                 .padding(.top, 18)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog(ask?.title ?? "", isPresented: Binding(
-            get: { ask != nil },
-            set: { if !$0 { ask = nil } }
-        ), titleVisibility: .visible) {
-            Button(ask?.confirm ?? "确认", role: ask?.destructive == true ? .destructive : nil) {
-                switch ask {
+        // iOS 27：直接以「要问的那件事」为状态（不再另配一个 Bool）。
+        .itemConfirmationDialog(ask?.title ?? "", item: $ask, titleVisibility: .visible) { a in
+            Button(a.confirm, role: a.destructive ? .destructive : nil) {
+                switch a {
                 case .revoke(let d): ask = nil; Task { await revoke(d) }
                 case .fault(let d): ask = nil; Task { await writeFault(d) }
                 case .unbind(let d): ask = nil; unbind(d)
-                case nil: break
                 }
             }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text(ask?.message ?? "")
+            Button("取消", role: .cancel) { ask = nil }
+        } message: { a in
+            Text(a.message)
         }
     }
 
@@ -1131,9 +1305,9 @@ struct DiagnosticsScreen: View {
     @State private var busy = false
     @State private var message: String?
     @State private var raw = false
-    @State private var confirmingRepair = false
+    @State private var confirmingRepair: Bool? = nil
     // C7：帧骨架一旦贴出去就收不回来，复制前先确认一次。
-    @State private var confirmingFrameCopy = false
+    @State private var confirmingFrameCopy: Bool? = nil
 
     // F2：附近设备 —— 扫描广播 + 对任意候选设备发回声探测。
     private struct Candidate: Identifiable {
@@ -1161,6 +1335,11 @@ struct DiagnosticsScreen: View {
     @State private var status: StatusSnapshotData?
     @State private var changeLogs: [LogEntry] = []
     @State private var godBusy = false
+    // B71/B19/B73/B67/B68 的页面状态。
+    @State private var health = HealthCheck.Report()
+    @State private var storage = StoreIntegrity.Report()
+    @State private var replayResult: String?
+    @State private var bundleURL: URL?
 
     private var kc: Keychain? { DB.keychainForUnlock(app.currentMac) }
 
@@ -1302,6 +1481,112 @@ struct DiagnosticsScreen: View {
                 godSections(kc)
             }
 
+            // B71：健康检查 —— 一项一项查，每项给出**修复入口**，
+            // 而不只是「读数」。「诊断页只能读」这条纪律对**读**成立，
+            // 这里的按钮跳到别的页面去修，不在这一页写门锁。
+            if !DB.isDecoy {
+                SectionHead(index: "04", title: "健康检查")
+                Text(health.summary)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.bottom, T.S.s)
+                ForEach(health.items) { item in
+                    healthRow(item)
+                }
+                GhostButton(title: L("common.refresh"), symbol: "arrow.clockwise") {
+                    health = HealthCheck.run(mac: app.currentMac)
+                }
+                .padding(.top, T.S.s)
+            }
+
+            // B19/B69：命令时间线 + 只读回放。
+            if !DB.isDecoy {
+                SectionHead(index: "05", title: "最近的命令")
+                ForEach(CommandTimeline.entries(12)) { r in
+                    timelineRow(r)
+                }
+                if let last = CommandReplay.available.first {
+                    GhostButton(title: "回放最近一帧（只解析，不发锁）", symbol: "play") {
+                        replayResult = CommandReplay.replay(last.hex)
+                    }
+                    .padding(.top, T.S.s)
+                    if let replayResult {
+                        Text(replayResult)
+                            .type(T.F.caption)
+                            .foregroundStyle(T.C.ink2)
+                            .padding(.top, 6)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
+            // B73：本机存储完整性 —— 哪些数据读不出来，能不能救。
+            if !DB.isDecoy {
+                SectionHead(index: "06", title: "本机数据")
+                Text(storage.summary)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.bottom, T.S.s)
+                ForEach(storage.issues) { issue in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(issue.what)
+                            .type(T.F.footnote)
+                            .foregroundStyle(T.C.ink)
+                        Text(issue.repairable ? "\(issue.problem) · 可以从备份恢复" : "\(issue.problem) · 备份里也没有")
+                            .type(T.F.caption)
+                            .foregroundStyle(issue.repairable ? T.C.ink3 : T.C.danger)
+                    }
+                    .padding(.vertical, 4)
+                }
+                if storage.issues.contains(where: { $0.repairable }) {
+                    GhostButton(title: "从备份恢复", symbol: "arrow.down.to.line") {
+                        let r = StoreIntegrity.repair()
+                        storage = r
+                        AppToast.shared.show(r.repaired.isEmpty ? "没有可恢复的项" : "已恢复 \(r.repaired.count) 项")
+                        Task { await app.reload() }
+                    }
+                    .padding(.top, T.S.s)
+                }
+                if !storage.issues.isEmpty {
+                    if let residue = StoreIntegrity.exportResidue() {
+                        ShareLink(item: residue) {
+                            Text("导出残片")
+                                .type(T.F.footnote)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(T.C.brass)
+                        }
+                        .padding(.top, T.S.s)
+                    }
+                }
+            }
+
+            // B67/B68：异常退出记录 + 一键诊断包。
+            if !DB.isDecoy {
+                SectionHead(index: "07", title: "异常退出与诊断包")
+                Text(CrashLog.summary())
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                Text("诊断包里只有设备、权限、链路与命令记录 —— 不含密码、密钥或任何凭证。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.top, 4)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let bundleURL {
+                    ShareLink(item: bundleURL) {
+                        Text(L("diag.bundle.title"))
+                            .type(T.F.footnote)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(T.C.brass)
+                    }
+                    .padding(.top, T.S.s)
+                } else {
+                    GhostButton(title: "生成诊断包", symbol: "square.and.arrow.up") {
+                        bundleURL = DiagnosticBundle.writeFile(mac: app.currentMac)
+                    }
+                    .padding(.top, T.S.s)
+                }
+            }
+
             SectionHead(index: DB.isDecoy ? "03" : "08", title: "本机")
             Text("App 版本 1.0 · 协议层 \(app.lock?.model ?? "—") · 数据全部在本机")
                 .type(T.F.caption)
@@ -1365,32 +1650,103 @@ struct DiagnosticsScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         // 修复 PIN 池会让**别的设备**上那把钥匙失效 —— 不可逆，值得先问一句。
-        .confirmationDialog("重写这把锁的 PIN 池？",
-                            isPresented: $confirmingRepair,
+        .itemConfirmationDialog("重写这把锁的 PIN 池？",
+                                item: $confirmingRepair,
                             titleVisibility: .visible) {
-            Button("重写", role: .destructive) {
+            Button("重写", role: .destructive) { _ in
                 Task { await repair() }
             }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("只换锁里的 PIN 池，不换母钥：本机的钥匙仍然有效，但其他设备上已配的旧钥匙会失效。")
         }
-        .confirmationDialog("复制这些帧骨架？",
-                            isPresented: $confirmingFrameCopy,
+        .itemConfirmationDialog("复制这些帧骨架？",
+                                item: $confirmingFrameCopy,
                             titleVisibility: .visible) {
-            Button("复制") {
+            Button("复制") { _ in
                 Clip.set(Array(frames.suffix(8)).joined(separator: "\n"))
                 AppToast.shared.show("已复制 \(min(frames.count, 8)) 条脱敏帧")
             }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("帧骨架已脱敏，但仍含命令类型与 MAC。贴出去就收不回来 —— 确认接收方可信再复制。")
         }
         .task {
             // 进页先给盘上的缓存快照；要最新读数点「重新读取」。
             if let kc { status = DB.readStatus(kc.mac) }
+            // B71/B73：健康检查与存储完整性各跑一次（纯本地读，不碰门锁）。
+            health = HealthCheck.run(mac: app.currentMac)
+            storage = StoreIntegrity.scan()
         }
         .sheet(isPresented: $consoleOpen) { WriteConsoleSheet() }
+    }
+
+    /// B71：健康检查的一行。图标 + 名称 + 结论；坏了的那几项用危险色。
+    private func healthRow(_ item: HealthCheck.Item) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: item.status == .ok ? "checkmark.circle"
+                                : (item.status == .warn ? "exclamationmark.circle" : "xmark.octagon"))
+                .font(.system(size: 14, weight: .regular))
+                .foregroundStyle(item.status == .ok ? T.C.ok : (item.status == .warn ? T.C.brass : T.C.danger))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                    .type(T.F.footnote)
+                    .foregroundStyle(T.C.ink)
+                Text(item.detail)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 6)
+            if let fix = item.fix {
+                Text(fix)
+                    .type(T.F.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(T.C.brass)
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// B19：命令时间线的一行。
+    private func timelineRow(_ r: CommandRecord) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: r.isFailure ? "xmark.circle" : "checkmark.circle")
+                .font(.system(size: 13, weight: .regular))
+                .foregroundStyle(r.isFailure ? T.C.danger : T.C.ok)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(r.name)
+                        .type(T.F.footnote)
+                        .foregroundStyle(T.C.ink)
+                    Text(r.outcome)
+                        .type(T.F.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(r.isFailure ? T.C.danger : T.C.ink3)
+                    Text("\(r.ms)ms")
+                        .type(T.F.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(T.C.ink3)
+                }
+                if !r.note.isEmpty {
+                    Text(r.note)
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.ink3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if r.mayHaveExecuted {
+                    Text("可能已经执行")
+                        .type(T.F.caption)
+                        .foregroundStyle(T.C.danger)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 3)
+        .accessibilityElement(children: .combine)
     }
 
     /// 诊断页的「读一次日志」：走既有的 AppModel.readLogs（续读逻辑在引擎层），

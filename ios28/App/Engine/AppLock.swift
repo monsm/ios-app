@@ -42,26 +42,31 @@ final class AppLock: ObservableObject {
     private let cooldownUptimeKey = "kf_lock_cool_up"
     private let cooldownBootKey = "kf_lock_cool_boot"
 
-    /// 冷却梯度（用户拍板：3→30s，5→5min，7→30min）。
+    /// 冷却梯度。默认 3→30s，5→5min，7→30min（用户拍板）。
     /// 4 位数字码 10^4 次可穷举，加了冷却后脚本爆破被拖到无利可图。
+    ///
+    /// B33：梯度与起点改成**可调策略**（`AppLockPolicy`），默认值与原来逐档相同 ——
+    /// 老用户升级后行为不变，想更严的人才去设置里调。
     private func cooldownSeconds(for streak: Int) -> Double {
-        switch streak {
-        case ..<3: return 0
-        case 3...4: return 30
-        case 5...6: return 300
-        default: return 1800
-        }
+        let policy = AppLockPolicyStore.current()
+        let ladder = policy.cooldownLadder
+        // 策略里的起点 = 第 escalateAfter 次开始冷却。
+        if streak < policy.escalateAfter { return 0 }
+        let idx = min(max(streak - policy.escalateAfter, 0), max(ladder.count - 1, 0))
+        return Double(ladder[idx])
     }
 
     private init() {
         failStreak = DB.store.getInt(failStreakKey, 0)
         cooldownUntil = DB.store.getDouble(cooldownKey, 0)
         // 有密码才需要锁；无密码时解锁态（与旧行为一致：没设密码就不该拦人）
-        unlocked = !DB.hasPasscode()
+        // B33：策略里可以显式关掉「要本机密码」—— 关了就是直接进，不拦人。
+        unlocked = !DB.hasPasscode() || !AppLockPolicyStore.current().requirePasscode
     }
 
     /// 有本机密码（或胁迫码）时才需要门禁。
-    var isEnabled: Bool { DB.hasPasscode() }
+    /// B33：策略关掉「要本机密码」时，门禁整体不生效。
+    var isEnabled: Bool { DB.hasPasscode() && AppLockPolicyStore.current().requirePasscode }
 
     /// 冷却剩余秒数（0 = 可用）。
     ///
@@ -199,10 +204,12 @@ final class AppLock: ObservableObject {
     /// 回前台：超过 30 秒就重新要求本机密码（手机被拿走、放在别人手里时的真实场景），
     /// 30 秒内来回切（接个电话、看一眼通知）不打断。
     /// 2026-10-31 安全审核修复（SEC-21）：旧实现 lock() 全仓零调用点，解锁一次后进程不退出就再也不上锁。
-    func willEnterForeground(now: Date = Date(), lockAfter: Double = 30) {
+    func willEnterForeground(now: Date = Date(), lockAfter: Double? = nil) {
         defer { backgroundedAt = 0 }
         guard isEnabled, backgroundedAt > 0 else { return }
-        if now.timeIntervalSince1970 - backgroundedAt >= lockAfter { lock() }
+        // B33：回前台上锁的等待时长可调（默认仍是 30 秒）。
+        let limit = lockAfter ?? Double(AppLockPolicyStore.current().foregroundLockSeconds)
+        if now.timeIntervalSince1970 - backgroundedAt >= limit { lock() }
     }
 
     func lock() {

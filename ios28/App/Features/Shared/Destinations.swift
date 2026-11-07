@@ -23,6 +23,7 @@ enum Destinations {
         case .dfu: DfuScreen()
         case .diagnostics: DiagnosticsScreen()
         case .security: SecurityScreen()
+        case .recovery: RecoveryScreen()
         case .backup: BackupScreen()
         case .appearance: AppearanceScreen()
         case .about: AboutScreen()

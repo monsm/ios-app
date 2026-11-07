@@ -11,7 +11,7 @@ struct LocksScreen: View {
 
     @State private var pendingDelete: LockSummary?
     @State private var errorLine: String?
-    @State private var confirmingWipe = false
+    @State private var confirmingWipe: Bool? = nil
 
     var body: some View {
         ScreenScroll {
@@ -46,11 +46,24 @@ struct LocksScreen: View {
                     .padding(.top, 12)
             }
 
+            // F23：被关在门外时的入口。它不该藏在「数据」那一段里 ——
+            // 那是出事时**第一件**要按的按钮。
+            if !DB.isDecoy {
+                SectionHead(index: "02", title: "出问题了")
+                Button {
+                    router.pushSettings(.recovery)
+                } label: {
+                    ContentRow(symbol: "key.slash", tone: .cool, title: "我锁在门外了",
+                               subtitle: "按顺序排查：电量、蓝牙、凭证、重新配对", chevron: true)
+                }
+                .buttonStyle(.plain)
+            }
+
             // 空壳里不提供任何"删除本机数据"的入口：这是不可逆的真实删除，
             // 而空壳的前提是胁迫者无论怎么点，都不会破坏主人的数据。
             // 一把锁都没有时也整段不摆 —— 一个恒被禁用的按钮只会让人以为它坏了。
             if !DB.isDecoy && !app.locks.isEmpty {
-                SectionHead(index: "02", title: "数据")
+                SectionHead(index: "03", title: "数据")
                 Button {
                     confirmingWipe = true
                 } label: {
@@ -62,9 +75,9 @@ struct LocksScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         // 一把没有确认门的「删除全部」：点错了就是全部钥匙串、台账、记录一起没。
-        .confirmationDialog("删除这台手机上全部门锁的数据？",
-                            isPresented: $confirmingWipe,
-                            titleVisibility: .visible) {
+        .itemConfirmationDialog("删除这台手机上全部门锁的数据？",
+                                item: $confirmingWipe,
+                                titleVisibility: .visible) { _ in
             Button("全部删除", role: .destructive) {
                 Task {
                     for lock in app.locks { DB.removeDevice(lock.id) }
@@ -73,23 +86,21 @@ struct LocksScreen: View {
                 }
             }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("只删本机。锁里的凭证和钥匙仍然有效，但本机再也打不开它们了。")
         }
-        .confirmationDialog("删除这把锁的本机数据？",
-                            isPresented: Binding(get: { pendingDelete != nil },
-                                                 set: { if !$0 { pendingDelete = nil } }),
-                            titleVisibility: .visible) {
+        // iOS 27：以「要删的那把锁」为状态。
+        .itemConfirmationDialog("删除这把锁的本机数据？",
+                                item: $pendingDelete,
+                                titleVisibility: .visible) { lock in
             Button("删除", role: .destructive) {
-                if let lock = pendingDelete {
-                    DB.removeDevice(lock.id)
-                    if app.overrideMac == lock.id { app.overrideMac = nil }
-                    Task { await app.reload() }
-                }
+                DB.removeDevice(lock.id)
+                if app.overrideMac == lock.id { app.overrideMac = nil }
                 pendingDelete = nil
+                Task { await app.reload() }
             }
             Button("取消", role: .cancel) { pendingDelete = nil }
-        } message: {
+        } message: { _ in
             Text("只删本机。锁里的凭证和钥匙仍然有效。")
         }
     }
@@ -189,7 +200,7 @@ struct LockPolicyScreen: View {
     @State private var errorLine: String?
     @State private var loaded = false
     /// 关闭双验要二次确认：它是把一道安全保险拆掉，不该跟开静音一样一点就生效。
-    @State private var confirmOffSafe = false
+    @State private var confirmOffSafe: Bool? = nil
     /// 程序性回写开关（载入配置、失败回退）不该再触发 `.onChange` 下发一条命令。
     /// 否则打开这一页时若锁里静音/双验是开的，会平白重发一次设置命令。
     @State private var skipMutedChange = false
@@ -199,16 +210,22 @@ struct LockPolicyScreen: View {
     @State private var skipEndHour = false
     // E6：清空全部密码的键入确认与确认框。
     @State private var clearTyped = ""
-    @State private var confirmingClear = false
+    // B22：本地的多时段布防排程。
+    @State private var schedule: [DefendWindow] = []
+    @State private var confirmingClear: Bool? = nil
 
     /// cmd24 的字段是 1 字节**档位**（厂商实现里就是 2–6 秒），不是任意秒数。
     /// 原先这里是 6/10/15/30/60 —— 后四档全在协议范围外，锁要么忽略、要么按截断值执行，
     /// 而本机仍把 30/60 记进 `TailgateCfg`，今日页还会照它倒计时。
     private let intervals = [2, 3, 4, 5, 6]
 
-    private var canDefend: Bool {
-        app.lock.map { PidMap.canDefend($0.pid) } ?? false
+    /// B15：能力协商 —— 判据含**固件版本**，不再只看型号。
+    private var caps: LockCapabilities {
+        app.lock.map { CapabilityResolver.resolve(pid: $0.pid, firmware: $0.firmware) }
+            ?? CapabilityResolver.resolve(pid: 0, firmware: "")
     }
+
+    private var canDefend: Bool { caps.canDefend }
 
     var body: some View {
         ScreenScroll {
@@ -316,11 +333,70 @@ struct LockPolicyScreen: View {
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 10)
 
+            // B22：多时段排程。锁端只有一个窗口 —— App 本地排多段，
+            // 到了该生效的那一段自动把「当前这一段」下发下去。
+            if canDefend {
+                SectionHead(index: "04", title: "布防排程")
+                Text(DefendSchedule.singleWindowNotice)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .padding(.top, 4)
+
+                if !schedule.isEmpty {
+                    VStack(alignment: .leading, spacing: T.S.s) {
+                        ForEach(schedule) { w in
+                            HStack(spacing: 10) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(w.title)
+                                        .type(T.F.footnote)
+                                        .foregroundStyle(T.C.ink)
+                                    Text(DefendSchedule.activeWindow(mac: app.currentMac) == w ? "现在生效" : "待命")
+                                        .type(T.F.caption)
+                                        .foregroundStyle(T.C.ink3)
+                                }
+                                Spacer(minLength: 8)
+                                TextAction(title: "删除", destructive: true) {
+                                    schedule.removeAll { $0.id == w.id }
+                                    DefendSchedule.save(mac: app.currentMac, schedule)
+                                    Task { await pushCurrentWindow() }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                    .padding(.top, T.S.s)
+                }
+
+                GhostButton(title: "按上面的时段加一段", symbol: "plus") {
+                    var w = DefendWindow()
+                    w.startSec = startHour * 3600
+                    w.endSec = endHour * 3600
+                    w.mode = DefendMode.period.rawValue
+                    schedule.append(w)
+                    DefendSchedule.save(mac: app.currentMac, schedule)
+                    Task { await pushCurrentWindow() }
+                }
+                .padding(.top, T.S.s)
+
+                Text("当前排程：" + DefendSchedule.summary(mac: app.currentMac))
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.top, 6)
+            }
+
             if !canDefend {
                 Text("这把锁的型号不支持布防。")
                     .type(T.F.caption)
                     .foregroundStyle(T.C.danger)
                     .padding(.top, 6)
+            } else if let caveat = caps.caveat {
+                // B15：型号/固件不在我们验证过的范围内 —— 如实说，别装作确定。
+                Text(caveat)
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .padding(.top, 6)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             if let errorLine {
@@ -380,18 +456,18 @@ struct LockPolicyScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { load() }
-        .confirmationDialog("关闭双验？", isPresented: $confirmOffSafe, titleVisibility: .visible) {
+        .itemConfirmationDialog("关闭双验？", item: $confirmOffSafe, titleVisibility: .visible) { _ in
             Button("关闭双验", role: .destructive) { safeMode = false }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("之后开门只需要一种凭证。这道保险拆掉后，被逼着开门的人只要拿到一项凭证就够了。")
         }
-        .confirmationDialog("清空全部密码？", isPresented: $confirmingClear, titleVisibility: .visible) {
+        .itemConfirmationDialog("清空全部密码？", item: $confirmingClear, titleVisibility: .visible) { _ in
             Button("清空密码", role: .destructive) {
                 Task { await runClearPwd() }
             }
             Button("取消", role: .cancel) {}
-        } message: {
+        } message: { _ in
             Text("会把锁里所有密码作废（指纹保留），本机密码台账同时清空。这一步不可撤销：清空后只能逐条重新添加。")
         }
     }
@@ -474,6 +550,7 @@ struct LockPolicyScreen: View {
             loaded = true
             return
         }
+        schedule = DefendSchedule.windows(mac: app.currentMac)
         let savedMuted = app.lock?.muted ?? false
         if muted != savedMuted { skipMutedChange = true; muted = savedMuted }
         let savedSafe = app.lock?.safeMode ?? false
@@ -510,6 +587,15 @@ struct LockPolicyScreen: View {
     }
 
     /// 改小时：重新下发当前模式。失败时把两个 Picker 退回已保存的值。
+    /// 把「当前应该生效的那一段」下发到锁（B22）。
+    ///
+    /// 锁端只有一个窗口 —— 所以「多段」是本地的排程，锁只拿到当下这一段。
+    private func pushCurrentWindow() async {
+        guard canDefend else { return }
+        let w = DefendSchedule.lockWindow(mac: app.currentMac)
+        _ = await app.applyDefence(w.mode, startSec: w.startSec, endSec: w.endSec)
+    }
+
     private func saveDefence() {
         guard loaded, canDefend, !busy else { return }
         let target = defendMode

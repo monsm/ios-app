@@ -80,6 +80,15 @@ final class LinkSenseModel {
 
     /// 进空壳时清掉上一会话的信号读数与历史：`lastRSSI` / `history` 是本机攒下的
     /// 使用痕迹（最后一次离门多近），`connectMs` 是上一次握手耗时。
+    /// 换锁时清掉上一把锁的信号读数与历史（B46）。
+    func clearForLockSwitch() {
+        lastRSSI = nil
+        history = []
+        connectMs = nil
+        attempt = 0
+        phase = resolvePhase()
+    }
+
     func clearForDecoy() {
         lastRSSI = nil
         history = []
@@ -93,7 +102,14 @@ final class LinkSenseModel {
         guard !mac.isEmpty, !busy else { return }
         busy = true
         phase = .connecting
-        defer { busy = false; phase = resolvePhase() }
+        // B45：扫描有引用计数 —— 离开这一页/进后台都要释放，
+        // 否则扫描窗口会一直开着（蓝牙扫描是耗电大户）。
+        ScanPolicy.acquire("preheat")
+        defer {
+            ScanPolicy.release("preheat")
+            busy = false
+            phase = resolvePhase()
+        }
         do {
             try await BLEService.shared.startScan(allowDuplicates: false, timeoutMs: 3000)
             var hit: BLEAdvDevice?

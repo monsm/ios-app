@@ -40,6 +40,34 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
 /// 而 `UIApplicationDelegate` 的实现是 main-actor 隔离；两者混在同一个类上会报
 /// 「conformance crosses into main actor-isolated code」。
 /// 拆开之后：这个类整体 nonisolated，只在跳转那一步显式切回 MainActor。
+/// 通知授权状态（本地记一份，供健康检查与诊断包读）。
+enum NotificationStatus {
+    enum State: Int {
+        case unknown = 0
+        case authorized = 1
+        case denied = 2
+        case failed = 3
+    }
+    private static let key = "kf_notify_status"
+
+    static func record(_ state: State) {
+        DB.store.setInt(key, state.rawValue)
+    }
+
+    static var current: State {
+        State(rawValue: DB.store.getInt(key, 0)) ?? .unknown
+    }
+
+    var label: String {
+        switch self {
+        case .unknown: return "未询问"
+        case .authorized: return "已授权"
+        case .denied: return "已拒绝"
+        case .failed: return "询问失败"
+        }
+    }
+}
+
 enum NotificationAuth {
     private static let asked = Locked(false)
     /// 幂等：一次会话只问一次；已授权时 requestAuthorization 立即返回 granted，无弹窗。
@@ -48,8 +76,18 @@ enum NotificationAuth {
         asked.withLock { $0 = true }
         let nc = UNUserNotificationCenter.current()
         nc.requestAuthorization(options: [.alert, .sound, .badge]) { granted, err in
-            if let err { CredentialOrg.notifyLog.error("通知授权失败：\(String(describing: err), privacy: .public)") }
-            else if !granted { CredentialOrg.notifyLog.error("用户未授予通知权限：到期提醒不会送达") }
+            // 把真实状态记下来：健康检查与诊断包要读它。
+            // 以前没有任何地方记过这件事，于是「通知有没有授权」只能现场问系统
+            // （那要等一个回调），诊断包就写不出结论。
+            if let err {
+                NotificationStatus.record(.failed)
+                CredentialOrg.notifyLog.error("通知授权失败：\(String(describing: err), privacy: .public)")
+            } else if !granted {
+                NotificationStatus.record(.denied)
+                CredentialOrg.notifyLog.error("用户未授予通知权限：到期提醒不会送达")
+            } else {
+                NotificationStatus.record(.authorized)
+            }
         }
     }
 }

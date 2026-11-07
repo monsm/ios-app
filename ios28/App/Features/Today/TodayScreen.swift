@@ -4,32 +4,71 @@
 //   1. 日光窗（室外）：一块有厚度的玻璃，一行衬线字说清现在的状态。
 //   2. 门槛（镜头）：解锁镜头骑在窗沿上，环走的是真实命令链。
 //   3. 室内（内容）：读数、工具托盘、最近发生的事。
+//
+// 这一版补上的：
+//   · F25 常驻链路状态（LinkPill）与「读一次 / 重画界面」的语义区分；
+//   · F15 开锁失败后给**可执行的下一步**（诊断卡），不是一句报错；
+//   · F16 开锁成功的回执卡（自动上锁倒计时 + 这次用的凭证）；
+//   · F32 首屏骨架屏；F54 首页分区可编排。
 import SwiftUI
+import UIKit
 
 @MainActor
 struct TodayScreen: View {
     @Environment(AppModel.self) private var app
     @Environment(Router.self) private var router
+    /// F12/B64：尺寸类 —— regular 时（iPad 全屏、横屏）走左右两栏。
+    @Environment(\.horizontalSizeClass) private var hSize
+
+    private var wide: Bool { LayoutMode.isWide(hSize) }
 
     /// 成功的动作也要有回声：原先只有 `app.lastError` 一条出口，
     /// 校时成功、读完日志这类「什么都没发生」的动作在界面上等于没点。
     @State private var notice: String?
+    /// 开锁成功的回执卡（F16）。镜头成功后会回到 idle，所以回执由本视图自己记着。
+    @State private var receipt: Bool = false
+
+    private var settings = SettingsStore.shared
 
     var body: some View {
         ScreenScroll {
             if app.lock == nil {
-                EmptyHome()
-            } else {
-                header
-                hero
-                readings
-                tray
-                recent
-                if let error = app.lastError {
-                    note(error)
+                if app.isLoading {
+                    ScreenSkeleton(rows: 2)
+                } else {
+                    EmptyHome()
                 }
-                if let notice {
-                    successNote(notice)
+            } else {
+                // F41：蓝牙没开时，页内说明 + 跳系统设置。
+                // 以前这件事只在点开锁失败之后才显形 —— 用户已经站在门口了。
+                if !BLEService.shared.isPoweredOn {
+                    PermissionNotice(symbol: "antenna.radiowaves.left.and.right.slash",
+                                     title: "蓝牙没有开",
+                                     detail: "门锁走的是蓝牙直连，不需要网络 —— 但蓝牙得开着。",
+                                     openSettings: openBluetoothSettings)
+                }
+                // F12/B64：宽版（iPad / 横屏）左右两栏，紧凑版仍是一条竖轴。
+                twoColumns(wide) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        header
+                        hero
+                        if receipt { receiptCard }
+                    }
+                } trailing: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if settings.homeSections.contains("readings") { readings }
+                        if settings.homeSections.contains("tray") { tray }
+                        if settings.homeSections.contains("recent") { recent }
+                        // 失败与诊断：结构化的失败走诊断卡（F15），其余仍是一行提示。
+                        if app.lastUnlockFailure != nil {
+                            diagnosisCard
+                        } else if let error = app.lastError {
+                            note(error)
+                        }
+                        if let notice {
+                            successNote(notice)
+                        }
+                    }
                 }
             }
         }
@@ -40,6 +79,16 @@ struct TodayScreen: View {
         .onAppear { ScreenAwake.want(SettingsStore.shared.keepScreenAwake) }
         .onDisappear { ScreenAwake.want(false) }
         .onChange(of: SettingsStore.shared.keepScreenAwake) { _, on in ScreenAwake.want(on) }
+        // 回执：镜头走到「已打开」时亮出来，6 秒后自己收走。
+        .onChange(of: app.phase) { _, phase in
+            if phase == .opened {
+                receipt = true
+                Task {
+                    try? await Task.sleep(for: .seconds(6))
+                    if receipt { withAnimation(T.M.settle) { receipt = false } }
+                }
+            }
+        }
     }
 
     // MARK: - 头部
@@ -53,7 +102,13 @@ struct TodayScreen: View {
                     .foregroundStyle(T.C.ink2)
             }
             Spacer(minLength: 12)
-            // 设置入口在底栏第 4 个按钮；头像只做身份标记，不再假装可点。
+            // F25：链路状态常驻。它回答的是「现在能不能开门」——
+            // 以前这件事只能靠点一次开锁去试探。
+            LinkPill(phase: app.link.phase,
+                     rssi: app.link.lastRSSI,
+                     busy: app.link.busy) {
+                Task { await app.link.reconnect() }
+            }
             AvatarBadge(initial: initial, size: 38)
                 .accessibilityHidden(true)
         }
@@ -161,14 +216,51 @@ struct TodayScreen: View {
         return "还没有开过门。轻点镜头，试试看。"
     }
 
+    // MARK: - 回执卡（F16）
+
+    private var receiptCard: some View {
+        UnlockReceiptCard(credential: app.lastUnlockCredential,
+                          autoLockSeconds: app.autoLockLeft ?? 6) {
+            router.goToLogRoot()
+        }
+    }
+
+    // MARK: - 诊断卡（F15）
+
+    private var diagnosisCard: some View {
+        UnlockDiagnosisCard(
+            failure: app.lastUnlockFailure,
+            steps: UnlockDiagnosis.steps(failure: app.lastUnlockFailure,
+                                          linkPhase: app.link.phase,
+                                          battery: app.lock?.battery ?? -1,
+                                          safeMode: app.lock?.safeMode ?? false,
+                                          muted: app.lock?.muted ?? false),
+            onRetry: { Task { await app.unlock() } },
+            onOpenSettings: openBluetoothSettings,
+            onDiagnose: {
+                router.openSettings()
+                router.pushSettings(.diagnostics)
+            })
+    }
+
     // MARK: - 读数
 
     private var readings: some View {
-        ReadingRow(items: [
-            (label: "电量", value: batteryText, unit: batteryUnit),
-            (label: "信号", value: LinkSenseModel.levelWord(app.link.rssiLevel), unit: app.link.lastRSSI.map { "\($0) dBm" }),
-            (label: "固件", value: firmwareText, unit: nil),
-        ])
+        VStack(alignment: .leading, spacing: 0) {
+            // F38：陈旧徽标。读数是「上次读到的」，不能冒充实时 ——
+            // 这里用**状态快照**的时间戳，不是日志同步时间（那是另一件事）。
+            if let snap = DB.readStatus(app.currentMac), DB.isStatusStale(app.currentMac) {
+                StaleBadge(at: Int64(snap.at)) {
+                    Task { await app.refreshStatus() }
+                }
+                .padding(.bottom, T.S.s)
+            }
+            ReadingRow(items: [
+                (label: "电量", value: batteryText, unit: batteryUnit),
+                (label: "信号", value: LinkSenseModel.levelWord(app.link.rssiLevel), unit: app.link.lastRSSI.map { "\($0) dBm" }),
+                (label: "固件", value: firmwareText, unit: nil),
+            ])
+        }
     }
 
     private var batteryText: String {
@@ -320,6 +412,9 @@ struct TodayScreen: View {
                                   }
                               }
                           })
+            } else if let progress = app.logProgress {
+                // F42/F45：读日志的进度 —— 「第 N/20 页、已读 M 条」。
+                ProgressMeter(progress: progress) { app.cancelLogRead() }
             }
         }
     }
@@ -363,6 +458,12 @@ struct TodayScreen: View {
             try? await Task.sleep(for: .seconds(3))
             if notice == text { notice = nil }
         }
+    }
+
+    /// 跳系统设置（蓝牙页）。权限提示卡上的「去系统设置」用它。
+    private func openBluetoothSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }
 
