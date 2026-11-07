@@ -96,13 +96,14 @@ ios28/
 
 | 项 | 状态 |
 |---|---|
-| 静态闸门 | ✅ 全绿（7 道） |
+| 静态闸门 | ✅ 全绿（8 道：swiftparse / tokensync / tokens / lineage / destmap / contrast / l10n / stringlit） |
 | 视觉验收台 | ✅ 7 屏 × 明暗两套已渲染 |
-| 真编译 | ✅ 通过（CI run 42236340048 · 提交 `2a4d6b3`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27 SDK，未签名 IPA 已打包） |
+| 真编译 | ✅ 通过（CI run 62 · 提交 `e8918526`：`build_ok=1` `archive_ok=1` `errors=0` `warnings=7`，iOS 27.1 SDK，最低部署 iOS 26，未签名 IPA 已打包） |
 | 真机手感 | ❌ 未验（镜头按压、触觉、真实材质折射） |
 | 动态字体极端值 | ⚠️ 已按令牌缩放，AX5 仍要看真机 |
 | 横屏 / iPad | ⚠️ iPad 与横屏**已支持**（两栏版式 + 系统侧边栏），但**未在真机/iPad 上验过** |
 | 单元测试 | ❌ 本版没有（`Tests/` 空）。上一版的 8 个测试文件没有随界面重写一起搬过来 —— `xcodebuild test` 在这台自托管 runner 上**永远跑不完**（见 `ios27.yml` 的说明），硬接进 CI 会堵死整条队列 |
+| 剩余告警 | 7 条（3 处）：`DiagKit` 的两个多余 `try`、`LockServicePairing` 的一个未用变量 —— 都是上一版留下的，不在本次范围 |
 
 **这份 README 不会用"已完成"掩盖上面几项没做到的验证。**
 
