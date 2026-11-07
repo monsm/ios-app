@@ -87,24 +87,6 @@ enum RecordsSource {
         return Int64(DB.store.getString("kf_logsync_" + DB.normalizeMac(mac)))
     }
 
-    // MARK: - 断点续读锚点（真机审计 2026-11-07）
-    //
-    // 锁端日志约 2000 条滚存，单次读取最高 20 页（BLE 长操作的可靠性上限，真机实测
-    // 16 页内断链 4 次）。锚点 = 「已覆盖的最低序号 − 1」= 下一次 cmd16 的 startIdx：
-    // 撞上限后第二次点击**从锚点继续往更早翻**，而不是从最新重读；surplus=0 时收锚。
-    // 键与 lastSync 同族；空壳里不读也不写（同口径）。
-    static func logCursor(mac: String) -> UInt32? {
-        if DB.isDecoy { return nil }
-        let s = DB.store.getString("kf_logscan_" + DB.normalizeMac(mac))
-        return UInt32(s)
-    }
-
-    static func setLogCursor(mac: String, _ nextStart: UInt32?) {
-        let key = "kf_logscan_" + DB.normalizeMac(mac)
-        if let v = nextStart {
-            DB.store.set(key, String(v))
-        } else {
-            DB.store.remove(key)
-        }
-    }
+    // 2026-11-07：断点续读取消 —— 读日志改为「每轮先清空本地 + 从最新循环读全量」，
+    // 不再有锚点。旧键 `kf_logscan_<mac>` 不再写入（残留无消费方）。
 }

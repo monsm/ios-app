@@ -51,14 +51,17 @@ struct TodayScreen: View {
                 twoColumns(wide, leading: {
                     VStack(alignment: .leading, spacing: 0) {
                         header
+                            .entrance(0, rise: 8)
                         hero
-                        if receipt { receiptCard }
+                            .entrance(1, rise: 18)
+                            .scrollParallax(depth: 0.94)
+                        if receipt { receiptCard.entrance(2, rise: 10) }
                     }
                 }, trailing: {
                     VStack(alignment: .leading, spacing: 0) {
-                        if settings.homeSections.contains("readings") { readings }
-                        if settings.homeSections.contains("tray") { tray }
-                        if settings.homeSections.contains("recent") { recent }
+                        if settings.homeSections.contains("readings") { readings.entrance(2, rise: 12) }
+                        if settings.homeSections.contains("tray") { tray.entrance(3, rise: 12) }
+                        if settings.homeSections.contains("recent") { recent.entrance(4, rise: 12) }
                         // 失败与诊断：结构化的失败走诊断卡（F15），其余仍是一行提示。
                         if app.lastUnlockFailure != nil {
                             diagnosisCard

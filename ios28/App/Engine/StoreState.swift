@@ -62,6 +62,15 @@ extension DB {
         set(cache, "kf_logcache_" + mac)
     }
 
+    /// 清空一把锁的记录缓存。
+    ///
+    /// 读日志的新口径是「每轮先清空、再读全量」—— 这个口就是那一下。
+    /// 它只删本机副本，不动锁端，也不动备注/旗标（那些在 RecordOverlay 里，键不同）。
+    static func clearLogs(_ mac: String) {
+        guard cacheWritable(mac) else { return }
+        store.remove("kf_logcache_" + mac)
+    }
+
     static func readLogs(_ mac: String) -> [CachedLog] {
         // SEC-03：空壳模式不返回任何锁内日志（记录页/门页/导出都读这里）。
         if DB.isDecoy { return [] }

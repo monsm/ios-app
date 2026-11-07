@@ -13,6 +13,8 @@ struct GateScreen: View {
     @State private var input = ""
     @State private var message: String?
     @State private var cooling = AppLock.shared.cooldownRemaining()
+    /// 错误抖动计数器（每次输入失败 +1）。
+    @State private var shakeCount: CGFloat = 0
 
     /// 本机密码是 4–8 位数字（见 PasscodeSheet）。
     /// 所以**不能**在第 6 位自动提交 —— 4 位或 8 位的密码都会被自动提交那一刀切错，
@@ -39,7 +41,9 @@ struct GateScreen: View {
                 Text("阈")
                     .type(T.F.wordmark)
                     .foregroundStyle(T.C.ink)
+                    .entrance(0, rise: 6)
                 Kicker(text: "THRESHOLD · 本机密码", dot: false, tint: T.C.ink3)
+                    .entrance(1, rise: 4)
             }
 
             Spacer(minLength: 26)
@@ -47,6 +51,9 @@ struct GateScreen: View {
             DisplayLine(text: message ?? "先确认是你。", size: 30)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
+                .entrance(2, rise: 8)
+                // 输错时横抖一下（配一次错误触感）—— 不用红字训人。
+                .shake(shakeCount)
 
             HStack(spacing: 9) {
                 ForEach(0 ..< max(minDigits, input.count), id: \.self) { index in
@@ -75,6 +82,7 @@ struct GateScreen: View {
             Spacer(minLength: 20)
 
             keypad
+                .entrance(3, rise: 16)
 
             PrimaryButton(title: "解锁", enabled: canSubmit) {
                 submit()
@@ -133,6 +141,9 @@ struct GateScreen: View {
                                                      tint: GlassMetrics.tint, interactive: true)
                                         // 74×60 的玻璃键，命中区不能只有中间那个数字。
                                         .contentShape(Rectangle())
+                                        // 键位依次亮起：从左上到右下，间隔 28ms。
+                                        .entrance(row * 3 + (keys[row].firstIndex(of: key) ?? 0),
+                                                  rise: 8, delayStep: 0.028)
                                 }
                                 .buttonStyle(PressStyle())
                                 .accessibilityLabel(key == "⌫" ? "删除" : key)
@@ -146,6 +157,7 @@ struct GateScreen: View {
 
     private func tap(_ key: String) {
         guard cooling == 0 else { return }
+        Haptics.impact(.light)
         message = nil
         if key == "⌫" {
             if !input.isEmpty { input.removeLast() }
@@ -167,6 +179,7 @@ struct GateScreen: View {
             message = remaining > 0 ? "再试一次。" : "密码不对。"
             if remaining > 0 { cooling = remaining }
             Haptics.notify(.error)
+            withAnimation(.linear(duration: 0.42)) { shakeCount += 1 }
         case .cooling(let remaining):
             input = ""
             cooling = remaining

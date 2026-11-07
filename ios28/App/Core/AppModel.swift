@@ -668,13 +668,14 @@ final class AppModel {
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             sampleRSSI()
-            // 断点续读 + 自适应分页 + 后台补读都在 LogSync 里（B39/B42）。
-            // 放进子 Task：这样「取消」能真的打断它，而不是只把进度条藏起来。
+            // 全量读取：LogSync 会**先清空本机缓存**，再从最新往回翻到尽头。
+            // 放进子 Task：「取消」能真的打断它，而不是只把进度条藏起来。
             let task = Task { await LogSync.sync(mac: mac) { p in
                 Task { @MainActor in
-                    self.logProgress?.update("第 \(p.page) / \(p.pages) 页 · 已读 \(p.read) 条",
+                    let left = p.remaining.map { " · 锁端还剩 \($0) 条" } ?? ""
+                    self.logProgress?.update("第 \(p.page) 页 · 已读 \(p.read) 条\(left)",
                                             step: p.page,
-                                            fraction: Double(p.page) / Double(max(p.pages, 1)))
+                                            fraction: nil)
                 }
             } }
             logTask = task
@@ -682,30 +683,28 @@ final class AppModel {
             logTask = nil
             logProgress = nil
 
-            let capped = result.capped
-            let remaining = result.remaining
-            let lowest = result.lowest
-            // 只读读数（诊断页展示用）：分页统计在这里落一笔，不参与上面的任何判停逻辑。
+            // 只读读数（诊断页展示用）：本轮的分页统计。
             lastLogRead = LogReadStats(
                 pages: result.pages,
                 read: result.read,
-                remaining: remaining,
-                capped: capped,
-                lowest: lowest,
+                remaining: nil,
+                capped: false,
+                lowest: nil,
                 done: result.done,
                 at: Int64(Date().timeIntervalSince1970 * 1000))
             await reload(refreshStatus: false)
+            readLogsAt = RecordsSource.lastSync(mac: mac)
 
-            if result.interrupted {
-                // 部分成功（F43）：读到的已经落盘并留了锚点，下一轮从断点继续。
-                let why = result.message ?? "连接中断"
-                lastError = "\(why)（已保存本次读到的 \(result.read) 条；再读一次会从断点继续）"
-                return (read: result.read, remaining: remaining)
+            if result.cancelled {
+                lastError = "已取消读取。已读到的 \(result.read) 条保留（它们是最新的一段）。"
+                return (read: result.read, remaining: nil)
             }
-            // 撞上限 ⇒ 排一轮后台补读（B39）：连着的时候自动往更早翻，
-            // 不必等用户再点一次。
-            if capped { LogSync.scheduleBackground(mac) }
-            return (read: result.read, remaining: remaining)
+            if result.interrupted {
+                let why = result.message ?? "连接中断"
+                lastError = "\(why)（已保存本次读到的 \(result.read) 条；再读一次会重新读全量）"
+                return (read: result.read, remaining: nil)
+            }
+            return (read: result.read, remaining: nil)
         } catch {
             logProgress = nil
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -713,13 +712,13 @@ final class AppModel {
         }
     }
 
-    /// 取消正在进行的读日志（F42）。已读到的部分仍然落盘 —— 下次从断点继续。
+    /// 取消正在进行的读日志。已读到的部分仍然落盘（最新的一段）。
     func cancelLogRead() {
         logTask?.cancel()
         logTask = nil
         logProgress = nil
         busy = nil
-        lastError = "已取消读取。已读到的部分保留，下次从断点继续。"
+        lastError = "已取消读取。已读到的部分保留。"
     }
 
     // MARK: - 凭证写入

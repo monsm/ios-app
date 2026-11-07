@@ -122,8 +122,8 @@ struct ReadingValue: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 2) {
             Text(value)
-                .font(.system(size: 19, weight: .semibold))
-                .tracking(-0.3)
+                .font(.system(size: 22, weight: .semibold))
+                .tracking(-0.5)
                 .monospacedDigit()
                 .foregroundStyle(T.C.ink)
                 // F31：数字变化时**滚动**而不是跳变。
@@ -149,7 +149,7 @@ struct ReadingColumn: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
                 .type(T.F.kicker)
-                .tracking(1.2)
+                .tracking(1.5)
                 .foregroundStyle(T.C.ink3)
             ReadingValue(value: value, unit: unit)
         }
@@ -318,6 +318,8 @@ struct ToolTray: View {
 struct SegmentedBar: View {
     var items: [String]
     @Binding var selected: Int
+    /// 选中格背后的浅洗色：在选项之间滑动（matchedGeometry），不是每格各画一块。
+    @Namespace private var pillNS
     /// 不可用的分段不该还能点：`LockPolicyScreen` 在型号不支持布防时
     /// 只在下面写了一行提示，控件本身仍可点 —— 点了会发一条注定失败的命令。
     var enabled: Bool = true
@@ -352,6 +354,7 @@ struct SegmentedBar: View {
                     if index == selected {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .fill(T.C.brassWash)
+                            .matchedGeometryEffect(id: "segmentPill", in: pillNS)
                     }
                 }
                 .contentShape(Rectangle())
@@ -380,12 +383,16 @@ struct EmptyNote: View {
         VStack(alignment: .leading, spacing: 10) {
             EmptyMotifView(motif: motif, size: 44)
                 .padding(.bottom, 2)
-            DisplayLine(text: line, size: 30)
+            DisplayLine(text: line, size: 32)
             Text(detail)
                 .type(T.F.footnote)
                 .foregroundStyle(T.C.ink2)
                 .lineSpacing(4)
             if let action, let run {
+                Rectangle()
+                    .fill(T.C.hair)
+                    .frame(width: 44, height: 0.5)
+                    .padding(.top, 2)
                 Button(action: run) {
                     Text(action)
                         .type(T.F.footnote)
@@ -393,7 +400,6 @@ struct EmptyNote: View {
                         .foregroundStyle(T.C.brass)
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 2)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

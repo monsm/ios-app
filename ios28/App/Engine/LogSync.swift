@@ -1,44 +1,50 @@
-// LogSync.swift —— 锁内日志的增量同步（B39）与自适应分页（B42）。
+// LogSync.swift —— 从门锁读日志：**每次清空本地、循环读全量**（2026-11-07 改）。
 //
-// 现状（真机审计 2026-11-07）：锁端日志约 2000 条滚存，单轮读取有 20 页上限，
-// 一次只取最近 ~200 条；撞上限后靠「断点续读」在下一次点击时继续往更早翻。
+// 口径（用户拍板）：
+//   1. 每轮开始前**先清空本机那份记录缓存** —— 不留旧副本；
+//   2. 从锁端**最新一页往回循环翻**，一直翻到锁说「没有了」为止（不是增量、不是断点续读）；
+//   3. 每轮都写进 `LogReadJournal`：什么时候读的、读了多少、为什么没读完。
 //
-// 两个补齐：
-//   · **后台补读**（B39）：撞上限的那一轮不必等用户再点一次 —— 连着的时候自动排下一轮。
-//   · **自适应分页**（B42）：链路稳就多取几页，链路断就少取几页并退避。
-//     页面大小默认仍是 5（真机验证过的口径），只有**连续成功**才放宽，断链立刻收回。
+// 代价要说清楚：锁端日志约 2000 条滚存，一页 5–8 条 ⇒ 一轮 250–400 页，
+// 真机上要跑几分钟。所以界面上必须有进度、可取消；取消时**已读到的仍然落盘**
+// （那是"最新的一段"，不是新旧混合）。
+//
+// 断链的处理：把已读到的写回去并如实记一条中断 —— 不清成空、也不重试整轮。
 import Foundation
 
 enum LogSync {
-    /// 单轮最多翻几页（协议侧的安全上限，别轻易动）。
-    static let maxPages = 20
-    /// 单页条数（真机验证口径）。
+    /// 单页条数（真机验证口径）。链路稳时自适应放宽。
     static let defaultPageSize = 5
-    /// 自适应分页的取值范围。
     static let minPageSize = 3
     static let maxPageSize = 8
     /// 连续几页成功才放宽页大小。
     static let pagesBeforeGrow = 3
+    /// 单轮硬上限：防固件 bug 导致「永远说还有」的死循环。
+    /// 600 页 × 8 条 = 4800 条，覆盖 2000 条滚存还有余量。
+    static let pageCap = 600
 
     struct Progress {
         var page: Int
-        var pages: Int
         var read: Int
+        /// 锁端还剩多少（没报就是 nil）
+        var remaining: Int?
     }
 
     struct Result {
         var read: Int = 0
         var pages: Int = 0
-        var remaining: Int? = nil
-        var capped: Bool = false
-        var lowest: UInt32? = nil
-        var done: Bool = true
-        /// 中途断链（已读到的仍落盘）。
+        /// 读到了锁端历史的尽头
+        var done: Bool = false
+        /// 用户取消
+        var cancelled: Bool = false
+        /// 中途断链（已读到的仍已落盘）
         var interrupted: Bool = false
         var message: String? = nil
+        var durationMs: Int = 0
     }
 
-    /// 每把锁的自适应状态（页大小 + 连续成功页数）。
+    // MARK: - 自适应页大小
+
     private static let pageState = Locked([String: (pageSize: Int, streak: Int)]())
 
     private static func pageSize(_ mac: String) -> Int {
@@ -66,102 +72,79 @@ enum LogSync {
         }
     }
 
-    /// 读一轮。**从游标继续**（有锚点就往更早翻），撞上限时把锚点留下。
+    // MARK: - 一轮完整读取
+
+    /// 读一轮：**先清空本地**，再从最新往回翻到尽头。
     ///
-    /// 中途断链不算白读：已读到的先落盘并留锚点，下一轮从断点继续。
-    static func sync(mac: String,
-                     maxPages: Int = maxPages,
-                     onProgress: (@Sendable (Progress) -> Void)? = nil) async -> Result {
+    /// 调用方负责：链路已连上、不在空壳（这些在 AppModel 里判）。
+    static func sync(mac: String, onProgress: (@Sendable (Progress) -> Void)? = nil) async -> Result {
+        let t0 = Date()
         var result = Result()
-        var startIdx: UInt32 = RecordsSource.logCursor(mac: mac) ?? 0xFFFF_FFFF
+
+        // 1) 先清空本机那一份 —— 从这一刻起，界面上看到的就是「这一轮读到的」，
+        //    而不是上一轮留下的旧副本。
+        DB.clearLogs(mac)
+
+        var startIdx: UInt32 = 0xFFFF_FFFF
         var collected: [LogEntry] = []
         var surplus: Int?
-        var pages = 0
         let size = pageSize(mac)
+        var reachedEnd = false
 
         do {
-            for _ in 0 ..< maxPages {
-                // 取消：用户按下「取消」后不再翻下一页（已读的照旧落盘）。
-                if Task.isCancelled { break }
+            while true {
+                if Task.isCancelled {
+                    result.cancelled = true
+                    break
+                }
+                if result.pages >= pageCap { break }
+
                 let page = try await LockService.shared.getLogs(startIdx: startIdx, pageSize: size)
-                pages += 1
-                result.pages = pages
+                result.pages += 1
                 if let s = page.surplus { surplus = s }
-                if page.logs.isEmpty { break }
+
+                if page.logs.isEmpty { reachedEnd = true; break }
                 collected.append(contentsOf: page.logs)
                 result.read = collected.count
-                onProgress?(Progress(page: pages, pages: maxPages, read: collected.count))
-                if let s = page.surplus, s <= 0 { break }
-                if page.logs.count < size { break }
-                guard let low = page.logs.map(\.idxRaw).min(), low > 0 else { break }
+                onProgress?(Progress(page: result.pages, read: result.read, remaining: surplus))
+
+                if let s = page.surplus, s <= 0 { reachedEnd = true; break }
+                if page.logs.count < size { reachedEnd = true; break }
+                guard let low = page.logs.map(\.idxRaw).min(), low > 0 else { reachedEnd = true; break }
                 startIdx = low - 1
             }
-            noteSuccess(mac, pages: pages)
+            if !result.cancelled { noteSuccess(mac, pages: result.pages) }
         } catch {
-            // 真机断链是常态（审计实测 16 页里断 4 次）—— 已读到的先落盘 + 留锚点。
+            // 断链：已读到的照旧落盘（它们是"最新的那一段"），并如实记一条中断。
             noteDisconnect(mac)
-            guard !collected.isEmpty else {
-                result.interrupted = true
-                result.message = error.localizedDescription
-                return result
-            }
-            DB.writeLogs(mac, collected)
-            let low = collected.map(\.idxRaw).min()
-            if let l = low, l > 0 { RecordsSource.setLogCursor(mac: mac, l - 1) }
-            result.read = collected.count
-            result.lowest = low
-            result.capped = true
-            result.done = false
             result.interrupted = true
-            result.message = error.localizedDescription
-            return result
+            result.message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
 
-        let capped = pages >= maxPages && (surplus ?? 0) > 0
-        let lowest = collected.map(\.idxRaw).min()
-        if capped, let low = lowest, low > 0 {
-            RecordsSource.setLogCursor(mac: mac, low - 1)
-        } else {
-            RecordsSource.setLogCursor(mac: mac, nil)
+        // 2) 一次写入（缓存刚被清空，这里写进去的就是本轮读到的全量）。
+        if !collected.isEmpty {
+            DB.writeLogs(mac, collected)
+            RecordsSource.markSynced(mac: mac, at: Int64(Date().timeIntervalSince1970 * 1000))
         }
-        DB.writeLogs(mac, collected)
-        RecordsSource.markSynced(mac: mac, at: Int64(Date().timeIntervalSince1970 * 1000))
-        result.capped = capped
-        result.remaining = capped ? surplus : nil
-        result.lowest = lowest
-        result.done = !capped
+
+        // 3) `done` 的判据只有一个：翻到了尽头（不是「够 20 页」）。
+        result.done = reachedEnd && !result.interrupted && !result.cancelled
+        result.durationMs = Int(Date().timeIntervalSince(t0) * 1000)
+
+        // 4) 每一次读取都记一条（包括取消与中断）。
+        let name = DB.keychain(mac).map { LockArchive.displayName($0) } ?? mac
+        LogReadJournal.record(LogReadJournal.Entry(
+            at: Date().timeIntervalSince1970 * 1000,
+            mac: mac,
+            lockName: name,
+            pages: result.pages,
+            read: result.read,
+            done: result.done,
+            cancelled: result.cancelled,
+            interrupted: result.interrupted,
+            durationMs: result.durationMs,
+            note: result.message ?? (result.done ? "读到锁端历史尽头" : "未读完")
+        ))
         return result
-    }
-
-    // MARK: - 后台补读（B39）
-
-    private static let pending = Locked(Set<String>())
-    /// 同一时刻只跑一轮补读。用锁而不是 `static var` ——
-    /// 后者在 Swift 6 语言模式下是错误（全局可变状态不并发安全）。
-    private static let running = Locked(false)
-
-    /// 排一轮后台补读（同一把锁只排一次）。
-    static func scheduleBackground(_ mac: String) {
-        guard !mac.isEmpty else { return }
-        pending.withLock { $0.insert(mac) }
-    }
-
-    static var pendingMacs: [String] {
-        pending.withLock { Array($0) }
-    }
-
-    /// 跑排队中的补读。**一次一把锁** —— BLE 链路只挂得下一个 waiter。
-    @MainActor
-    static func runPending() async {
-        guard !running.withLock({ $0 }) else { return }
-        running.withLock { $0 = true }
-        defer { running.withLock { $0 = false } }
-        while let mac = pendingMacs.first {
-            pending.withLock { $0.remove(mac) }
-            guard !DB.isDecoy else { continue }
-            // 只在真的连着的时候补读 —— 否则只是白等 8 秒超时。
-            guard LockService.shared.connectedMAC == mac else { continue }
-            _ = await sync(mac: mac, maxPages: 4)
-        }
     }
 }

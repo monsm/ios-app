@@ -43,8 +43,6 @@ struct ThresholdApp: App {
                 if app.unlocked {
                     Task {
                         await app.reload(refreshStatus: false)
-                        // B39：后台排队的补读（更早的日志）趁现在跑掉。
-                        await LogSync.runPending()
                         // B36：过期的一次性交付，趁有机会把锁端那枚 PIN 删掉。
                         _ = await HandoffService.sweepExpired()
                     }

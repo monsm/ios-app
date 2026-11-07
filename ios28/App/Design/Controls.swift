@@ -28,6 +28,9 @@ struct UnlockLens: View {
     @State private var recoil: Bool = false
     /// iOS 26：玻璃变形的身份空间（镜片成功时从「镜头」morph 成「光圈」）。
     @Namespace private var morphNS
+    /// 待机时的呼吸（只在 idle 时走，且尊重「减少动态效果」）。
+    @State private var breath = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var ringProgress: Double {
         switch phase {
@@ -76,9 +79,27 @@ struct UnlockLens: View {
                 // 镜头是整页唯一的仪式感动作，也是浮在日光窗上的功能控件：
                 // 真玻璃让背后的窗景参与折射，比材料模糊更像"一片厚玻璃"。
                 //
+                // 呼吸光晕：玻璃底下的一团黄铜洗色，4 秒一次极缓的明暗。
+                // 它让镜头在待机时也"活着"，但幅度低到不会被误认为进度。
+                Circle()
+                    .fill(T.C.brassWash)
+                    .frame(width: 106, height: 106)
+                    .blur(radius: 22)
+                    .opacity(reduceMotion ? 0.28 : (breath ? 0.5 : 0.24))
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 4.2).repeatForever(autoreverses: true),
+                               value: breath)
+                    .onAppear { breath = true }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+
                 // 这一片玻璃是**可变形**的 —— 开锁成功时它会真的推开成一圈光。
                 LensGlass26(opened: phase == .opened, namespace: morphNS)
                     .shadow(color: T.C.shadow, radius: 20, x: 0, y: 14)
+
+                // 光圈叶片：12 道极淡的刻度。忙碌时整组转 6° —— 幅度很小，但能读出来。
+                ApertureTicks()
+                    .rotationEffect(.degrees(phase.isBusy ? 6 : 0))
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 2.4), value: phase.isBusy)
 
                 Circle()
                     .strokeBorder(T.C.brassBright.opacity(0.28), lineWidth: 1.5)
@@ -90,6 +111,21 @@ struct UnlockLens: View {
                     .rotationEffect(.degrees(-90))
                     .padding(5)
                     .animation(T.M.settle, value: ringProgress)
+
+                // 「等回执」时的一段光弧：它真的在转，而不是让环停在 0.86 让人怀疑卡住。
+                if phase == .waiting, !reduceMotion {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
+                        let t = ctx.date.timeIntervalSinceReferenceDate
+                        Circle()
+                            .trim(from: 0, to: 0.16)
+                            .stroke(T.C.brassBright.opacity(0.75),
+                                    style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .rotationEffect(.degrees((t * 300).truncatingRemainder(dividingBy: 360)))
+                            .padding(5)
+                    }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                }
 
                 Circle()
                     .fill(
@@ -146,6 +182,23 @@ struct UnlockLens: View {
     }
 }
 
+/// 光圈叶片：一圈极淡的径向刻度。
+private struct ApertureTicks: View {
+    var body: some View {
+        ZStack {
+            ForEach(0 ..< 12, id: \.self) { i in
+                Capsule()
+                    .fill(T.C.brass.opacity(i % 3 == 0 ? 0.34 : 0.15))
+                    .frame(width: 1, height: i % 3 == 0 ? 7 : 4)
+                    .offset(y: -49)
+                    .rotationEffect(.degrees(Double(i) * 30))
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
 // MARK: - 按钮
 
 struct PrimaryButton: View {
@@ -178,7 +231,19 @@ struct PrimaryButton: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
             }
+            .overlay {
+                // 上缘一条极淡的高光：实底按钮也需要"受光"，否则像一块贴纸。
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(colors: [.white.opacity(0.22), .clear],
+                                       startPoint: .top, endPoint: .center)
+                    )
+                    .mask(alignment: .top) { Rectangle().frame(height: 22) }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
             .shadow(color: T.C.brass.opacity(0.22), radius: 18, x: 0, y: 12)
+            .shadow(color: T.C.shadow.opacity(0.6), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PressStyle())
         .disabled(!enabled || busy)
@@ -429,6 +494,8 @@ extension NavRow where Trailing == EmptyView {
 
 struct TabBar: View {
     @Binding var selection: Int
+    /// 选中格背后的那片"灯"：在三个标签之间滑动（matchedGeometry）。
+    @Namespace private var selectionNS
     /// 第 4 个按钮：设置。浮岛胶囊形态下它不是 Tab（不参与选中态），
     /// 点它是拉起独立的设置栈 sheet；原生系统栏形态（I6）下它才是真 Tab。
     var onSettings: () -> Void
@@ -455,6 +522,16 @@ struct TabBar: View {
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
+                    // 选中格背后一片黄铜洗色：它随选中项滑过去，而不是"亮一下"。
+                    .background {
+                        if index == selection {
+                            Capsule()
+                                .fill(T.C.brassWash)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .matchedGeometryEffect(id: "tabSelection", in: selectionNS)
+                        }
+                    }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -502,6 +579,8 @@ struct TabBar: View {
         .shadow(color: T.C.shadow, radius: 26, x: 0, y: 14)
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
+        // 切标签的一下轻触（系统级：尊重「减少动态/触感」设置）。
+        .sensoryFeedback(.selection, trigger: selection)
     }
 }
 

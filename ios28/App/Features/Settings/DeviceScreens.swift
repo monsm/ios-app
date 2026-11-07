@@ -1593,45 +1593,60 @@ struct DiagnosticsScreen: View {
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 4)
 
-            // 09 读日志读数（只读展示）：真机锁日志约 2000 条滚存，readLogs 单轮最多 20 页。
-            // 撞上限后锚点自动保留 —— 下一次点击从「已覆盖最低序号 − 1」继续往更早翻。
+            // 09 读日志：**每轮先清空本地、再从最新循环读全量**（2026-11-07 用户拍板）。
+            // 锁端约 2000 条滚存 ⇒ 一轮几百页、几分钟；这里给进度、可取消，并把每一轮都记下来。
             if !DB.isDecoy {
-                SectionHead(index: "09", title: "读日志读数")
-                let hasCursor = RecordsSource.logCursor(mac: app.currentMac) != nil
-                HStack(spacing: 10) {
-                    GhostButton(title: logBusy ? "正在读…" : (hasCursor ? "继续读更早" : "读一次日志"),
-                                symbol: hasCursor ? "arrow.down.to.line" : "list.bullet.rectangle") {
-                        Task { await readLogsOnce() }
-                    }
-                    if hasCursor {
-                        GhostButton(title: "从最新重读", symbol: "arrow.counterclockwise") {
-                            Task { await restartLogs() }
-                        }
-                    }
+                SectionHead(index: "09", title: "读日志")
+                GhostButton(title: logBusy ? "正在读…" : "读全量（会清空本机副本）",
+                            symbol: "arrow.triangle.2.circlepath") {
+                    Task { await readLogsOnce() }
                 }
                 .disabled(logBusy)
                 .opacity(logBusy ? 0.55 : 1)
                 .padding(.top, 6)
+                Text("每一轮都会先清空本机那份记录，再把锁里的历史从最新翻到尽头 —— 不读增量、不用旧副本。锁端约 2000 条，真机上要跑几分钟。")
+                    .type(T.F.caption)
+                    .foregroundStyle(T.C.ink3)
+                    .lineSpacing(3)
+                    .padding(.top, 6)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let p = app.logProgress {
+                    ProgressMeter(progress: p) { app.cancelLogRead() }
+                        .padding(.top, 8)
+                }
                 if let s = app.lastLogRead {
-                    godRow("已读页数", "\(s.pages) / 20 页上限")
+                    godRow("已读页数", "\(s.pages) 页")
                     godRow("已读条数", "\(s.read) 条（本轮）")
-                    godRow("已覆盖到", s.lowest.map { "#\($0)" } ?? "—")
-                    godRow("锁端剩余", s.remaining.map { "\($0) 条" } ?? "—")
-                    godRow("历史读完", s.done ? "是" : "否 —— 再点一次继续往更早")
+                    godRow("历史读完", s.done ? "是 —— 翻到了尽头" : "否")
                     godRow("上次读取", When.ago(s.at))
-                    if s.capped {
-                        Text("撞上 20 页上限 —— 本轮已保存并留了断点；「继续读更早」会从断点续翻，不会重读。")
-                            .type(T.F.caption)
-                            .foregroundStyle(T.C.danger)
-                            .lineSpacing(3)
-                            .padding(.top, 6)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                } else {
-                    Text("还没有读过 —— 点上面的按钮从门锁读一次。")
-                        .type(T.F.caption)
+                }
+
+                // 每一轮都留了记录（含取消与中断）。
+                let journal = LogReadJournal.entries(6)
+                if !journal.isEmpty {
+                    Text("读取记录")
+                        .type(T.F.kicker)
+                        .tracking(1.2)
                         .foregroundStyle(T.C.ink3)
-                        .padding(.top, 6)
+                        .padding(.top, 12)
+                    ForEach(journal) { e in
+                        HStack(spacing: 8) {
+                            Image(systemName: e.outcomeIsOK ? "checkmark.circle" : "exclamationmark.circle")
+                                .font(.system(size: 12))
+                                .foregroundStyle(e.outcomeIsOK ? T.C.ok : T.C.danger)
+                                .accessibilityHidden(true)
+                            Text(LogReadJournal.summary(e))
+                                .type(T.F.caption)
+                                .monospacedDigit()
+                                .foregroundStyle(T.C.ink2)
+                            Spacer(minLength: 6)
+                            Text(e.outcome)
+                                .type(T.F.caption)
+                                .foregroundStyle(e.outcomeIsOK ? T.C.ok : T.C.danger)
+                        }
+                        .padding(.vertical, 3)
+                    }
                 }
 
                 // 10 写面命令台：05/08/0A/0B/13-15/18-25/22、钥匙串 41-44、网关 —— 逐条手动触发。
@@ -1756,19 +1771,12 @@ struct DiagnosticsScreen: View {
         logBusy = true
         defer { logBusy = false }
         if let r = await app.readLogs() {
-            // 断链部分成功时 readLogs 会**带着结果返回**并把原因写进 lastError ——
-            // 直接只报「读到 N 条」会把「已留断点、再点继续」这句关键提示吞掉。
-            message = app.lastError ?? ("读到 \(r.read) 条" + (r.remaining.map { " · 锁端还有 \($0) 条" } ?? ""))
+            // 中断/取消时 readLogs 会带着结果返回并把原因写进 lastError ——
+            // 只报「读到 N 条」会把那句关键提示吞掉。
+            message = app.lastError ?? ("读完全量：\(r.read) 条")
         } else {
             message = app.lastError ?? "读取失败，请稍后重试。"
         }
-    }
-
-    /// 丢掉断点，回到从最新开始读（缓存不丢，只刷新最新一段）。
-    private func restartLogs() async {
-        guard !logBusy else { return }
-        RecordsSource.setLogCursor(mac: app.currentMac, nil)
-        await readLogsOnce()
     }
 
     // MARK: - God 档

@@ -78,7 +78,7 @@ struct LogScreen: View {
                 // LazyVStack 只渲染屏幕内与附近的行；数据本身全在缓存里。
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(groups) { group in
-                    DayHead(time: group.time, title: group.title)
+                    DayHead(time: group.time, title: group.title, count: group.items.count)
                     ForEach(group.items) { event in
                         Button {
                             router.openEvent(event.id)
@@ -363,7 +363,7 @@ struct LogScreen: View {
                         .type(T.F.callout)
                         .fontWeight(.medium)
                         .foregroundStyle(T.C.ink)
-                    Text(app.readLogsAt == nil ? "逐页读取，最多 100 条" : "上次 \(When.ago(app.readLogsAt))")
+                    Text(app.readLogsAt == nil ? "一次读完整本（会清空本机副本）" : "上次全量读取 \(When.ago(app.readLogsAt))")
                         .type(T.F.caption)
                         .foregroundStyle(T.C.ink3)
                 }

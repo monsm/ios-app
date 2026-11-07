@@ -84,7 +84,8 @@ struct ToastHost: View {
                 // 临时提示是"浮在内容之上"的一层，正是液态玻璃的场景。
                 .liquidGlass(in: Capsule(), tint: GlassMetrics.tint)
                 .padding(.bottom, 96)
-                .transition(.opacity)
+                // 从下往上弹一小段：提示是"发生了一件事"，不是一块自己浮现的雾。
+                .transition(.scale(scale: 0.92, anchor: .bottom).combined(with: .opacity))
                 // 只有胶囊本身接手势 —— 外面那层空白必须穿透，
                 // 否则整块浮层会把下面的 Tab 栏挡住。
                 .allowsHitTesting(true)
