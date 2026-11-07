@@ -9,11 +9,11 @@ import Foundation
 
 enum LogReadJournal {
     struct Entry: Codable, Identifiable, Equatable {
-        var id: String { "\(safeMillis(at))-\(mac)" }
+        var id: String { "\(Int(safeMillis(at)))-\(mac)" }
 
         /// 盘上的 Double 可能是损坏值（NaN / 1e300）—— 转 Int 前先夹住，不能 trap。
-        private var safeMillis: Double {
-            at.isFinite ? min(max(at, 0), 4_102_444_800_000) : 0
+        private func safeMillis(_ raw: Double) -> Double {
+            raw.isFinite ? min(max(raw, 0), 4_102_444_800_000) : 0
         }
         /// epoch 毫秒
         var at: Double
