@@ -43,7 +43,7 @@ extension DB {
         // 每次都要 get(整份缓存解码) + 合并 + set(整份写回) ⇒ O(页数 × 缓存条数) 的编解码，
         // 外加最多 20 次 UserDefaults 落盘。调用方已改成「循环结束只写一次」。
         //
-        // 合并语义保持不变（新页 + 已有缓存、按 idxRaw 去重、上限 300 条）；
+        // 合并语义保持不变（新页 + 已有缓存、按 idxRaw 去重、上限见下方 4096 的说明）；
         // 这里把结果按 idxRaw 倒序排一次 —— idxRaw 是锁端日志序号，越大越新，
         // 与原先「新页在前 + 旧缓存在后」的顺序等价，且不依赖调用方的拉取顺序。
         var byIdx = [UInt32: CachedLog]()
@@ -54,7 +54,11 @@ extension DB {
                                        diff: e.diffDescription)
         }
         let merged = Array(byIdx.values).sorted { $0.idxRaw > $1.idxRaw }
-        cache.logs = Array(merged.prefix(300))
+        // 2026-11-07（真机审计）：上限 300 → 4096。锁端日志约 2000 条滚存，而「断点续读」
+        // （AppModel.readLogs + RecordsSource.logCursor）要能把更早的段落留在缓存里 ——
+        // 300 条会把续读翻到的旧记录立刻截掉，"继续读更早" 就成了白翻。
+        // 4096 表示"整锁日志全量 + 余量"：解码成本只在 readLogs 时一次付出。
+        cache.logs = Array(merged.prefix(4096))
         set(cache, "kf_logcache_" + mac)
     }
 
@@ -66,7 +70,7 @@ extension DB {
 
     /// 2026-10-30 性能：`readLogs(mac).count` 的专用口 —— 只数条数，不解码每一条。
     /// 实现直接用 `JSONSerialization` 取根数组的 count（LogCache 的 logs 就是根下第一个数组），
-    /// 不走 Codable：`readLogs` 的成本是「300 条 CachedLog 逐条解码」，这里的成本只是解析一遍结构。
+    /// 不走 Codable：`readLogs` 的成本是「最多 4096 条 CachedLog 逐条解码」，这里的成本只是解析一遍结构。
     /// 调用方：warmLocks（多锁预热排序，每把锁一次）。
     static func readLogCount(_ mac: String) -> Int {
         guard let d = UserDefaults.standard.data(forKey: "kf.kf_logcache_" + mac),

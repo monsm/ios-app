@@ -12,6 +12,10 @@ struct LogScreen: View {
     /// 用户点了只会看到一句「已标记」，别处找不到。这条筛选就是给旗标一个出口。
     @State private var onlyFlagged = false
     @State private var errorLine: String?
+    /// 时间线的渲染窗口（真机审计 2026-11-07）：缓存现在可容整锁历史（~2000 条），
+    /// 而 ScreenScroll 是急渲染的 VStack —— 一次摆几千行会卡。默认渲染最新 400 条，
+    /// 「显示更早」按 400 递增；数据本身全在缓存里，搜索/洞察不受此窗口限制。
+    @State private var timelineLimit = 400
 
     var body: some View {
         ScreenScroll {
@@ -73,6 +77,14 @@ struct LogScreen: View {
                         }
                         .buttonStyle(.plain)
                     }
+                }
+                // 渲染窗口之外还有更早的记录 —— 数据在缓存里，按需展开。
+                if filtered.count > timelineLimit {
+                    GhostButton(title: "显示更早的 \(min(400, filtered.count - timelineLimit)) 条",
+                                symbol: "arrow.down.to.line") {
+                        timelineLimit += 400
+                    }
+                    .padding(.top, 6)
                 }
             }
 
@@ -208,7 +220,8 @@ struct LogScreen: View {
         var order: [String] = []
         var map: [String: [EventItem]] = [:]
         var undated: [EventItem] = []
-        for event in filtered {
+        // 只渲染窗口内的条目（见 timelineLimit 注释）；搜索计数等仍用完整的 filtered。
+        for event in filtered.prefix(timelineLimit) {
             // 锁端没读到时钟的记录**没有日期** —— 它们单独成组，排在最后。
             guard event.hasTime else {
                 undated.append(event)

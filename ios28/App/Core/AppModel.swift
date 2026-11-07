@@ -41,13 +41,15 @@ final class AppModel {
     var readLogsAt: Int64?
 
     /// 最近一次「从门锁读日志」的分页读数 —— **只读展示**，不参与任何逻辑（诊断页用）。
-    /// 真机审计（2026-11-07）：锁端日志约 2000 条滚存，`readLogs()` 的 20 页上限
+    /// 真机审计（2026-11-07）：锁端日志约 2000 条滚存，单次读取的 20 页上限
     /// 一次只取最近 ~200 条；这些读数就是让用户自己看清"取了多少、还剩多少"。
     struct LogReadStats {
         var pages = 0          // 实际翻了几页
         var read = 0           // 实际写入缓存的条数
         var remaining: Int?    // 锁端剩余的条数（未触上限且锁有上报时）
-        var capped = false     // 是否撞上 20 页上限
+        var capped = false     // 是否撞上 20 页上限（= 下次点击会继续往更早读）
+        var lowest: Int?       // 本轮后已覆盖的最低序号（nil = 还没读过）
+        var done = false       // 是否已把锁端历史读完（锚点已收）
         var at: Int64 = 0      // 读取时刻（epoch 毫秒）
     }
     /// 只读读数：最近一次 readLogs 的分页统计。
@@ -591,30 +593,62 @@ final class AppModel {
         do {
             try await LockService.shared.ensureConnected(mac: mac)
             sampleRSSI()
-            var startIdx: UInt32 = 0xFFFF_FFFF
+            // 断点续读（真机审计 2026-11-07）：锁端日志约 2000 条滚存，单轮最多 20 页。
+            // 有锚点（上次撞上限留下的「已覆盖最低序号 − 1」）就从锚点继续往更早翻；
+            // 没有（首次 / 已读完）才从最新开始。
+            var startIdx: UInt32 = RecordsSource.logCursor(mac: mac) ?? 0xFFFF_FFFF
             var collected: [LogEntry] = []
             var surplus: Int?
             var pages = 0
-            for _ in 0 ..< 20 {
-                let page = try await LockService.shared.getLogs(startIdx: startIdx, pageSize: 5)
-                pages += 1
-                if let s = page.surplus { surplus = s }
-                if page.logs.isEmpty { break }
-                collected.append(contentsOf: page.logs)
-                if let s = page.surplus, s <= 0 { break }
-                if page.logs.count < 5 { break }
-                guard let low = page.logs.map(\.idxRaw).min(), low > 0 else { break }
-                startIdx = low - 1
+            do {
+                for _ in 0 ..< 20 {
+                    let page = try await LockService.shared.getLogs(startIdx: startIdx, pageSize: 5)
+                    pages += 1
+                    if let s = page.surplus { surplus = s }
+                    if page.logs.isEmpty { break }
+                    collected.append(contentsOf: page.logs)
+                    if let s = page.surplus, s <= 0 { break }
+                    if page.logs.count < 5 { break }
+                    guard let low = page.logs.map(\.idxRaw).min(), low > 0 else { break }
+                    startIdx = low - 1
+                }
+            } catch {
+                // 真机断链是常态（审计实测 16 页里断 4 次）—— 已读到的先落盘 + 留锚点，
+                // 下一次点击从断点继续，而不是整轮白读（旧写法在这里把 collected 整个丢掉）。
+                guard !collected.isEmpty else { throw error }
+                DB.writeLogs(mac, collected)   // writeLogs 内部按 idxRaw 与缓存合并去重
+                let low = collected.map(\.idxRaw).min()
+                if let l = low, l > 0 {
+                    RecordsSource.setLogCursor(mac: mac, l - 1)
+                }
+                lastLogRead = LogReadStats(
+                    pages: pages, read: collected.count, remaining: nil, capped: true,
+                    lowest: low, done: false,
+                    at: Int64(Date().timeIntervalSince1970 * 1000))
+                await reload(refreshStatus: false)
+                lastError = ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+                    + "（已保存本次读到的 \(collected.count) 条；再点一次会从断点继续）"
+                return (read: collected.count, remaining: nil)
             }
-            let remaining = pages >= 20 ? surplus : nil
+            let capped = pages >= 20 && (surplus ?? 0) > 0
+            let remaining = capped ? surplus : nil
+            let lowest = collected.map(\.idxRaw).min()
+            // 锚点：下次从「本轮已覆盖最低序号 − 1」继续；读完了把锚点收掉。
+            if capped, let low = lowest, low > 0 {
+                RecordsSource.setLogCursor(mac: mac, low - 1)
+            } else {
+                RecordsSource.setLogCursor(mac: mac, nil)
+            }
             // 只读读数（诊断页展示用）：分页统计在这里落一笔，不参与上面的任何判停逻辑。
             lastLogRead = LogReadStats(
                 pages: pages,
                 read: collected.count,
                 remaining: remaining,
-                capped: pages >= 20,
+                capped: capped,
+                lowest: lowest,
+                done: !capped,
                 at: Int64(Date().timeIntervalSince1970 * 1000))
-            DB.writeLogs(mac, collected)
+            DB.writeLogs(mac, collected)   // writeLogs 内部按 idxRaw 与缓存合并去重
             RecordsSource.markSynced(mac: mac, at: Int64(Date().timeIntervalSince1970 * 1000))
             readLogsAt = RecordsSource.lastSync(mac: mac)
             await reload(refreshStatus: false)

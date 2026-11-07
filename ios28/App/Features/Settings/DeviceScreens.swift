@@ -1302,23 +1302,34 @@ struct DiagnosticsScreen: View {
                 .foregroundStyle(T.C.ink3)
                 .padding(.top, 4)
 
-            // 09 读日志读数（只读展示）：真机锁日志约 2000 条滚存，readLogs 的 20 页上限
-            // 一次只取最近 ~200 条 —— 把「读了多少 / 还剩多少 / 是否撞上限」摆成读数。
+            // 09 读日志读数（只读展示）：真机锁日志约 2000 条滚存，readLogs 单轮最多 20 页。
+            // 撞上限后锚点自动保留 —— 下一次点击从「已覆盖最低序号 − 1」继续往更早翻。
             if !DB.isDecoy {
                 SectionHead(index: "09", title: "读日志读数")
-                GhostButton(title: logBusy ? "正在读…" : "读一次日志", symbol: "list.bullet.rectangle") {
-                    Task { await readLogsOnce() }
+                let hasCursor = RecordsSource.logCursor(mac: app.currentMac) != nil
+                HStack(spacing: 10) {
+                    GhostButton(title: logBusy ? "正在读…" : (hasCursor ? "继续读更早" : "读一次日志"),
+                                symbol: hasCursor ? "arrow.down.to.line" : "list.bullet.rectangle") {
+                        Task { await readLogsOnce() }
+                    }
+                    if hasCursor {
+                        GhostButton(title: "从最新重读", symbol: "arrow.counterclockwise") {
+                            Task { await restartLogs() }
+                        }
+                    }
                 }
                 .disabled(logBusy)
                 .opacity(logBusy ? 0.55 : 1)
                 .padding(.top, 6)
                 if let s = app.lastLogRead {
                     godRow("已读页数", "\(s.pages) / 20 页上限")
-                    godRow("已读条数", "\(s.read) 条")
+                    godRow("已读条数", "\(s.read) 条（本轮）")
+                    godRow("已覆盖到", s.lowest.map { "#\($0)" } ?? "—")
                     godRow("锁端剩余", s.remaining.map { "\($0) 条" } ?? "—")
+                    godRow("历史读完", s.done ? "是" : "否 —— 再点一次继续往更早")
                     godRow("上次读取", When.ago(s.at))
                     if s.capped {
-                        Text("20 页上限已触发 —— 一次只取最近约 200 条；锁端更多记录要再点一次（从最新重新覆盖）。")
+                        Text("撞上 20 页上限 —— 本轮已保存并留了断点；「继续读更早」会从断点续翻，不会重读。")
                             .type(T.F.caption)
                             .foregroundStyle(T.C.danger)
                             .lineSpacing(3)
@@ -1376,7 +1387,7 @@ struct DiagnosticsScreen: View {
         .sheet(isPresented: $consoleOpen) { WriteConsoleSheet() }
     }
 
-    /// 诊断页的「读一次日志」：走既有的 AppModel.readLogs（逻辑零改动），
+    /// 诊断页的「读一次日志」：走既有的 AppModel.readLogs（续读逻辑在引擎层），
     /// 结果落在 lastLogRead（只读读数）与 message 上。
     private func readLogsOnce() async {
         guard !logBusy else { return }
@@ -1387,6 +1398,13 @@ struct DiagnosticsScreen: View {
         } else {
             message = app.lastError ?? "读取失败，请稍后重试。"
         }
+    }
+
+    /// 丢掉断点，回到从最新开始读（缓存不丢，只刷新最新一段）。
+    private func restartLogs() async {
+        guard !logBusy else { return }
+        RecordsSource.setLogCursor(mac: app.currentMac, nil)
+        await readLogsOnce()
     }
 
     // MARK: - God 档
