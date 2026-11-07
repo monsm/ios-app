@@ -25,6 +25,7 @@ struct LogScreen: View {
                         Image(systemName: "chart.bar")
                             .font(.system(size: 16))
                             .foregroundStyle(T.C.ink2)
+                            .accessibilityHidden(true)   // 装饰性图标：语义由外层按钮的 label 承担
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }

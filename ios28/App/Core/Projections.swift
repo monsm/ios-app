@@ -203,6 +203,24 @@ enum UnlockPhase: Equatable {
 enum When {
     static func unix(_ seconds: Int64) -> Date { Date(timeIntervalSince1970: TimeInterval(seconds)) }
 
+    // 2026-11-07（性能审计）：以下格式化口原先**每次调用都新建 DateFormatter**。
+    // 断点续读上线后缓存可容约 2000 条记录，记录页按行（clock）/按组（dayKey）/按日头（dayTitle）
+    // 逐条调用 —— DateFormatter 的构造是微秒级开销，一次滚动累计到肉眼可见的掉帧。
+    // 格式化路径本身线程安全（iOS 7+），locale 固定、无状态，缓存复用。
+    private static let zh = Locale(identifier: "zh_Hans_CN")
+    private static let clockFormatter: DateFormatter = {
+        let f = DateFormatter(); f.locale = zh; f.dateFormat = "HH:mm"; return f
+    }()
+    private static let dayKeyFormatter: DateFormatter = {
+        let f = DateFormatter(); f.locale = zh; f.dateFormat = "yyyy-MM-dd"; return f
+    }()
+    private static let monthDayFormatter: DateFormatter = {
+        let f = DateFormatter(); f.locale = zh; f.dateFormat = "M 月 d 日"; return f
+    }()
+    private static let yearMonthDayFormatter: DateFormatter = {
+        let f = DateFormatter(); f.locale = zh; f.dateFormat = "yyyy 年 M 月 d 日"; return f
+    }()
+
     /// Date → Unix 秒。`Int64(Double)` 在越界/NaN 时 trap；搜索框里的时间短语
     /// 来自用户输入，必须在进比较前夹到可表示范围（NaN 归 0）。
     static func epochSeconds(_ date: Date) -> Int64 {
@@ -213,17 +231,11 @@ enum When {
     }
 
     static func clock(_ seconds: Int64) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_Hans_CN")
-        f.dateFormat = "HH:mm"
-        return f.string(from: unix(seconds))
+        clockFormatter.string(from: unix(seconds))
     }
 
     static func dayKey(_ seconds: Int64) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_Hans_CN")
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: unix(seconds))
+        dayKeyFormatter.string(from: unix(seconds))
     }
 
     static func dayTitle(_ seconds: Int64) -> String {
@@ -231,10 +243,9 @@ enum When {
         let d = unix(seconds)
         if cal.isDateInToday(d) { return "今天" }
         if cal.isDateInYesterday(d) { return "昨天" }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_Hans_CN")
-        f.dateFormat = cal.isDate(d, equalTo: Date(), toGranularity: .year) ? "M 月 d 日" : "yyyy 年 M 月 d 日"
-        return f.string(from: d)
+        return cal.isDate(d, equalTo: Date(), toGranularity: .year)
+            ? monthDayFormatter.string(from: d)
+            : yearMonthDayFormatter.string(from: d)
     }
 
     static func ago(_ millis: Int64?) -> String {
@@ -245,10 +256,7 @@ enum When {
         if sec < 3600 { return "\(Int(sec / 60)) 分钟前" }
         if sec < 86400 { return "\(Int(sec / 3600)) 小时前" }
         if sec < 86400 * 7 { return "\(Int(sec / 86400)) 天前" }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_Hans_CN")
-        f.dateFormat = "M 月 d 日"
-        return f.string(from: then)
+        return monthDayFormatter.string(from: then)
     }
 
     /// 距离某个**未来**时刻还有多久。`ago` 只能往回看：喂给它一个未来时间戳，

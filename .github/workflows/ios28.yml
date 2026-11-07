@@ -162,3 +162,79 @@ jobs:
           git config user.email ci@local
           git add -A && git commit -q -m "ci28 build log run=$GITHUB_RUN_ID" || true
           git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci28-log || true
+
+  # 金标差分测试（引擎回归）—— 手动触发，允许失败，不拖垮主构建。
+  #
+  # 与 ios27 同一套稳健性教训：自托管 xcode-27 runner 上 `xcodebuild test`
+  # 偶发跑不完且 job 超时不一定生效 —— 它一挂就会占住并发组、堵死整条队列。
+  # 因此：① 只在 workflow_dispatch 时跑；② continue-on-error；
+  # ③ 8 分钟硬上限；④ 拿不到 iOS 27 模拟器 runtime 时**如实标 test_executed=no**
+  # （不是通过），并给出本机跑法。
+  golden:
+    name: 金标差分测试（引擎回归）
+    runs-on: xcode-27
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: gates
+    timeout-minutes: 8
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成工程
+        run: xcodegen generate
+
+      - name: 金标差分测试
+        id: golden
+        run: |
+          set -o pipefail
+          mkdir -p build
+          echo "== Xcode =="; xcodebuild -version
+          has_runtime() { xcrun simctl list runtimes 2>/dev/null | grep -qE "iOS (2[7-9]|[3-9][0-9])\."; }
+          echo "== 可用 runtime =="; xcrun simctl list runtimes || true
+          if ! has_runtime; then
+            echo "test_executed=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::没有 iOS 27+ 模拟器 runtime —— 金标测试本轮**未执行**（不是通过）。"
+            echo '本机跑法：xcodebuild test -scheme Threshold -destination "platform=iOS Simulator,name=<设备>"' | tee build/test.log
+            exit 0
+          fi
+          DEV=$(xcrun simctl list devices available -j 2>/dev/null | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)
+          names = [n["name"] for v in d.get("devices", {}).values() for n in v
+                   if n.get("isAvailable") and n.get("name", "").startswith("iPhone")]
+          print(names[0] if names else "")
+          ')
+          if [ -z "$DEV" ]; then
+            echo "test_executed=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::有 runtime 但取不到可用 iPhone 设备 —— 金标测试本轮**未执行**。"
+            exit 0
+          fi
+          echo "测试设备: $DEV"
+          echo "test_executed=yes" >> "$GITHUB_OUTPUT"
+          xcodebuild test \
+            -project Threshold.xcodeproj \
+            -scheme Threshold \
+            -destination "platform=iOS Simulator,name=$DEV" \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 300 \
+            -derivedDataPath build/DerivedData \
+            -configuration Debug \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee build/test.log
+
+      - name: 测试失败时把错误转成注解
+        if: failure()
+        run: |
+          grep -E "error:|Test Case.*failed" build/test.log 2>/dev/null | head -40 | sed "s#^#::error file=ios28/Tests::#" || true
+
+      - name: 上传测试日志
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios28-golden-test-log
+          path: ios28/build/test.log
+          if-no-files-found: ignore

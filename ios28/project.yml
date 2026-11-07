@@ -58,3 +58,35 @@ targets:
               - kf
         UIBackgroundModes:
           - bluetooth-central
+
+  # 金标差分回归（引擎层）：协议帧 / AES / 状态与日志解析 / ZOTP / 归属推断等
+  # 逐字节断言 vendor 金标（fixtures/golden.json）。
+  #
+  # 只在 test action 里构建（见 scheme），普通 `xcodebuild build` 不碰它 ——
+  # 测试目标的编译问题不会拖垮每次构建；CI 里由手动触发的 golden job 跑。
+  ThresholdTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+      - path: ../fixtures/golden.json
+        buildPhase: resources
+    dependencies:
+      - target: Threshold
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.aapk.threshold.tests
+
+schemes:
+  Threshold:
+    build:
+      targets:
+        Threshold: all
+        ThresholdTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ThresholdTests
